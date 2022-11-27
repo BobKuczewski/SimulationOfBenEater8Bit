@@ -1,0 +1,23 @@
+<html>
+<body>
+<canvas id="myCanvas"></canvas>
+<script>
+
+function setup(){
+    var canvas = document.getElementById('myCanvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = 890;
+    canvas.height = 759;
+    var image = new Image();
+    image.onload = function () {
+        ctx.drawImage(image,5,5);
+    };
+    image.src = 'computer_background_640.png';
+}
+
+window.onload = setup;
+
+setup();
+
+</script>
+</body>
