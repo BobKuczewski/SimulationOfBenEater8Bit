@@ -7,6 +7,7 @@
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
 <script>
+var consoleDebug = false;
 
 var red_on = "#ffcc88";
 var red_off = "#bb2222";
@@ -22,7 +23,8 @@ var clock_speeds = [ 1000, 200, 10 ];
 var clock_step_button = [ [true,69,32] ];
 var clock_auto_button = [ [false,121,29] ];
 
-var clock_LEDs = [ [true,232,6] ];
+var clock_LEDs = [ [false,232,6] ];
+
 var x1_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var x2_LEDs = [ [true,55,111] ];  // Red near Address Register DIP Switch
 
@@ -32,14 +34,18 @@ var program_ctr_LEDs = [ [false,386,6],
                          [true,413,6] ];
 
 var ucode_ctr_LEDs = [ [false,33,395],
-                       [true,43,395],
-                       [true,53,395] ];
+                       [false,43,395],
+                       [false,53,395] ];
 
 var ucode_state_LEDs = [ [false,66,390],
                          [true,76,390],
-                         [false,86,390],
-                         [false,96,390],
-                         [true,106,390] ];
+                         [true,86,390],
+                         [true,97,390],
+                         [true,108,390],
+                         [false,120,390] ];
+
+//                         [false,124,390],
+//                         [false,128,390] ];
 
 var bus_value_LEDs = [ [false,289,6],
                        [true,298,6],
@@ -144,8 +150,8 @@ function randomize_all_bits () {
   randomize_register_bits ( register_A_LEDs );
   randomize_register_bits ( mem_address_LEDs );
   randomize_register_bits ( bus_value_LEDs );
-  randomize_register_bits ( ucode_state_LEDs );
-  randomize_register_bits ( ucode_ctr_LEDs );
+  // randomize_register_bits ( ucode_state_LEDs );
+  // randomize_register_bits ( ucode_ctr_LEDs );
   randomize_register_bits ( program_ctr_LEDs );
 }
 
@@ -155,7 +161,7 @@ var image_loaded = false;
 
 function update_canvas() {
   var canvas = document.getElementById('drawing_area');
-  console.log ( "update_canvas" );
+  if (consoleDebug) console.log ( "update_canvas" );
   if (canvas != null) {
     var ctxt = canvas.getContext('2d');
     var w = canvas.width = 640;
@@ -165,13 +171,13 @@ function update_canvas() {
       ctxt.drawImage(image,0,0);
 
       // Draw the "clock_speed_button"
-      ctxt.fillStyle = "#ffffff88";
-      if (clock_speed_button[0][0]<=1) {
-        ctxt.fillStyle = "#ffff0044";
-      } else if (clock_speed_button[0][0]<=2) {
-        ctxt.fillStyle = "#ffff0088";
+      ctxt.fillStyle = "#ffffff44";
+      if (clock_speed_button[0][0]>=1000) {
+        ctxt.fillStyle = "#0000ff44";
+      } else if (clock_speed_button[0][0]>=200) {
+        ctxt.fillStyle = "#00ff0044";
       } else {
-        ctxt.fillStyle = "#ffff00cc";
+        ctxt.fillStyle = "#ff000044";
       }
       ctxt.fillRect( clock_speed_button[0][1]-20, clock_speed_button[0][2]-20, 20,20);
 
@@ -416,7 +422,7 @@ function update_canvas() {
 
 function setup_canvas() {
   var canvas = document.getElementById('drawing_area');
-  console.log ( "setup_canvas" );
+  if (consoleDebug) console.log ( "setup_canvas" );
   if (canvas != null) {
     var ctxt = canvas.getContext('2d');
     var w = canvas.width = 640;
@@ -449,29 +455,45 @@ function draw_canvas() {
   }
 }
 
+function mouse_up ( event ) {
+  if ( (event.clientX >= clock_step_button[0][1]) && (event.clientX <= clock_step_button[0][1]+20) ) {
+    if ( (event.clientY >= clock_step_button[0][2]) && (event.clientY <= clock_step_button[0][2]+20) ) {
+      if (consoleDebug) console.log ( "Clock up with " + event.clientX + ", " + event.clientY );
+      step();
+      update_canvas();
+    }
+  }
+}
+
 function mouse_down ( event ) {
-  console.log ( "Mouse down with " + event.clientX + ", " + event.clientY );
+  if ( (event.clientX >= clock_step_button[0][1]) && (event.clientX <= clock_step_button[0][1]+20) ) {
+    if ( (event.clientY >= clock_step_button[0][2]) && (event.clientY <= clock_step_button[0][2]+20) ) {
+      if (consoleDebug) console.log ( "Clock down with " + event.clientX + ", " + event.clientY );
+      step();
+      update_canvas();
+    }
+  }
   if ( (event.clientX >= clock_auto_button[0][1]) && (event.clientX <= clock_auto_button[0][1]+20) ) {
     if ( (event.clientY >= clock_auto_button[0][2]) && (event.clientY <= clock_auto_button[0][2]+20) ) {
       run_stop();
       clock_auto_button[0][0] = !clock_auto_button[0][0];
-      console.log ( "auto toggled to " + clock_auto_button[0][0] );
+      if (consoleDebug) console.log ( "auto toggled to " + clock_auto_button[0][0] );
       update_canvas();
     }
   }
   if ( (event.clientX >= clock_speed_button[0][1]-10) && (event.clientX <= clock_speed_button[0][1]+10) ) {
     if ( (event.clientY >= clock_speed_button[0][2]-10) && (event.clientY <= clock_speed_button[0][2]+10) ) {
-      console.log ( "toggle speed button pressed" );
+      if (consoleDebug) console.log ( "toggle speed button pressed" );
       for (let i=0; i<clock_speeds.length; i++) {
-        console.log ( "Checking speed " + i + ": " + clock_speeds[i] );
+        if (consoleDebug) console.log ( "Checking speed " + i + ": " + clock_speeds[i] );
         if (clock_speed_button[0][0] == clock_speeds[i]) {
-          console.log ( "toggle speed" );
+          if (consoleDebug) console.log ( "toggle speed" );
           if (i < (clock_speeds.length-1)) {
             clock_speed_button[0][0] = clock_speeds[i+1];
           } else {
             clock_speed_button[0][0] = clock_speeds[0];
           }
-          console.log ( "toggled speed to " + clock_speed_button[0][0] );
+          if (consoleDebug) console.log ( "toggled speed to " + clock_speed_button[0][0] );
           break;
         }
       }
@@ -481,7 +503,6 @@ function mouse_down ( event ) {
 
 }
 
-consoleDebug = true;
 stopRunning = false;
 function mainLoop()
 {
@@ -529,15 +550,15 @@ function run_stop() {
 //x		document.getElementById('RunStop').innerHTML = "Run/<u>Stop</u>";
 //x		document.getElementById('RunStop').setAttribute("style", "");
 		stop();
-//x		console.log ( "Opcodes Used:" );
+//x		if (consoleDebug) console.log ( "Opcodes Used:" );
 //x		for (i=0; i<16; i++) {
 //x			s = " " + hex2(i) + ":  ";
 //x			for (j=0; j<16; j++) {
 //x				s += " " + hex1(used_ops[(16*i)+j]);
 //x			}
-//x			console.log ( s + "\n" );
+//x			if (consoleDebug) console.log ( s + "\n" );
 //x		}
-		// console.log ( "Used:\n" + used_ops );
+		// if (consoleDebug) console.log ( "Used:\n" + used_ops );
 	}
 }
 function run() {
@@ -574,9 +595,48 @@ function step() {
 
 var count = 0;
 function exec_next() {
+  // Toggle the clock
+  clock_LEDs[0][0] = !clock_LEDs[0][0];
+
+  // Update the ucode counter on the appropriate clock edge
+  if (!clock_LEDs[0][0]) {
+    ucode_ctr_LEDs[0][0] = !ucode_ctr_LEDs[0][0];
+    if (!ucode_ctr_LEDs[0][0]) {
+      ucode_ctr_LEDs[1][0] = !ucode_ctr_LEDs[1][0];
+      if (!ucode_ctr_LEDs[1][0]) {
+        ucode_ctr_LEDs[2][0] = !ucode_ctr_LEDs[2][0];
+      }
+    }
+  }
+  // Update the ucode state based on the counter
+  let ucv = 0;
+  if (ucode_ctr_LEDs[2][0]) {
+    ucv = ucv | 0x04;
+  }
+  if (ucode_ctr_LEDs[1][0]) {
+    ucv = ucv | 0x02;
+  }
+  if (ucode_ctr_LEDs[0][0]) {
+    ucv = ucv | 0x01;
+  }
+  if (ucv > 5) {
+    ucv = 0;
+    ucode_ctr_LEDs[0][0] = false;
+    ucode_ctr_LEDs[1][0] = false;
+    ucode_ctr_LEDs[2][0] = false;
+  }
+  console.log ( "ucv = " + ucv );
+  ucode_state_LEDs[0][0] = true;
+  ucode_state_LEDs[1][0] = true;
+  ucode_state_LEDs[2][0] = true;
+  ucode_state_LEDs[3][0] = true;
+  ucode_state_LEDs[4][0] = true;
+  ucode_state_LEDs[5][0] = true;
+  ucode_state_LEDs[ucv][0] = false;
+
   randomize_all_bits();
   update_canvas();
-	console.log ( "Executed " + count );
+	if (consoleDebug) console.log ( "Executed " + count );
 	count = count + 1;
 }
 
@@ -602,6 +662,6 @@ setup_canvas();
 <body id='page' onload="setup_canvas()" onresize="update_canvas()" bgcolor="lightblue">
 <!--body id='page' bgcolor="lightblue"-->
 
-<canvas id="drawing_area" onmousedown="mouse_down(event)"></canvas>
+<canvas id="drawing_area" onmousedown="mouse_down(event)" onmouseup="mouse_up(event)"></canvas>
 
 </body>
