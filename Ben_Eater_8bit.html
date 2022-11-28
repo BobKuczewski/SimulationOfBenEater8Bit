@@ -8,8 +8,6 @@
 
 <script>
 
-var image = new Image();
-
 var red_on = "#ffcc88";
 var red_off = "#bb2222";
 var yellow_on = "#ffff00";
@@ -122,256 +120,277 @@ var control_word_LEDs = [ [true,366,497],
                           [false,493,497],
                           [true,502,497] ];
 
+var image = new Image();
+var image_loaded = false;
 
-function setup() {
-    var canvas = document.getElementById('drawing_area');
-    if (canvas != null) {
-      var ctxt = canvas.getContext('2d');
-      var w = canvas.width = 640;
-      var h = canvas.height = 546;
-      var image = new Image();
-      image.onload = function () {
-        // Draw the background image
-        ctxt.drawImage(image,0,0);
+function update_canvas() {
+  var canvas = document.getElementById('drawing_area');
+  console.log ( "update_canvas" );
+  if (canvas != null) {
+    var ctxt = canvas.getContext('2d');
+    var w = canvas.width = 640;
+    var h = canvas.height = 546;
+    if (image_loaded) {
+      // Draw the background image
+      ctxt.drawImage(image,0,0);
 
-        // Draw the Run/Stop or "clock_auto_button" button
-        ctxt.fillStyle = "#ffffff88";
-        if (clock_auto_button[0][0]) {
-          ctxt.fillStyle = "#ffff0088";
+      // Draw the Run/Stop or "clock_auto_button" button
+      ctxt.fillStyle = "#ffffff88";
+      if (clock_auto_button[0][0]) {
+        ctxt.fillStyle = "#ffff0088";
+      }
+      ctxt.fillRect( clock_auto_button[0][1]-10, clock_auto_button[0][2]-10, 20,20);
+
+      // Draw the Single Step or "clock_step_button" button
+      ctxt.fillStyle = "#ffffff88";
+      ctxt.fillRect( clock_step_button[0][1]-10, clock_step_button[0][2]-10, 20,20);
+
+      // Draw the Clock light
+      for (let i=0; i<clock_LEDs.length; i++) {
+        if (clock_LEDs[i][0]) {
+          ctxt.fillStyle = blue_on;
+        } else {
+          ctxt.fillStyle = blue_off;
         }
-        ctxt.fillRect( clock_auto_button[0][1]-10, clock_auto_button[0][2]-10, 20,20);
+        ctxt.beginPath();
+        ctxt.arc(clock_LEDs[i][1], clock_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Single Step or "clock_step_button" button
-        ctxt.fillStyle = "#ffffff88";
-        ctxt.fillRect( clock_step_button[0][1]-10, clock_step_button[0][2]-10, 20,20);
-
-        // Draw the Clock light
-        for (let i=0; i<clock_LEDs.length; i++) {
-          if (clock_LEDs[i][0]) {
-            ctxt.fillStyle = blue_on;
-          } else {
-            ctxt.fillStyle = blue_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(clock_LEDs[i][1], clock_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the x1 light
+      for (let i=0; i<x1_LEDs.length; i++) {
+        if (x1_LEDs[i][0]) {
+          ctxt.fillStyle = green_on;
+        } else {
+          ctxt.fillStyle = green_off;
         }
-
-        // Draw the x1 light
-        for (let i=0; i<x1_LEDs.length; i++) {
-          if (x1_LEDs[i][0]) {
-            ctxt.fillStyle = green_on;
-          } else {
-            ctxt.fillStyle = green_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(x1_LEDs[i][1], x1_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+        ctxt.beginPath();
+        ctxt.arc(x1_LEDs[i][1], x1_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
+      // Draw the x2 light
+      for (let i=0; i<x2_LEDs.length; i++) {
+        if (x2_LEDs[i][0]) {
+          ctxt.fillStyle = red_on;
+        } else {
+          ctxt.fillStyle = red_off;
         }
-        // Draw the x2 light
-        for (let i=0; i<x2_LEDs.length; i++) {
-          if (x2_LEDs[i][0]) {
-            ctxt.fillStyle = red_on;
-          } else {
-            ctxt.fillStyle = red_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(x2_LEDs[i][1], x2_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+        ctxt.beginPath();
+        ctxt.arc(x2_LEDs[i][1], x2_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
+
+      // Draw the Program Counter
+      for (let i=0; i<program_ctr_LEDs.length; i++) {
+        if (program_ctr_LEDs[i][0]) {
+          ctxt.fillStyle = green_on;
+        } else {
+          ctxt.fillStyle = green_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(program_ctr_LEDs[i][1], program_ctr_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Program Counter
-        for (let i=0; i<program_ctr_LEDs.length; i++) {
-          if (program_ctr_LEDs[i][0]) {
-            ctxt.fillStyle = green_on;
-          } else {
-            ctxt.fillStyle = green_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(program_ctr_LEDs[i][1], program_ctr_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Microcode Counter
+      for (let i=0; i<ucode_ctr_LEDs.length; i++) {
+        if (ucode_ctr_LEDs[i][0]) {
+          ctxt.fillStyle = red_on;
+        } else {
+          ctxt.fillStyle = red_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(ucode_ctr_LEDs[i][1], ucode_ctr_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Microcode Counter
-        for (let i=0; i<ucode_ctr_LEDs.length; i++) {
-          if (ucode_ctr_LEDs[i][0]) {
-            ctxt.fillStyle = red_on;
-          } else {
-            ctxt.fillStyle = red_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(ucode_ctr_LEDs[i][1], ucode_ctr_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Microcode State
+      for (let i=0; i<ucode_state_LEDs.length; i++) {
+        if (ucode_state_LEDs[i][0]) {
+          ctxt.fillStyle = green_on;
+        } else {
+          ctxt.fillStyle = green_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(ucode_state_LEDs[i][1], ucode_state_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Microcode State
-        for (let i=0; i<ucode_state_LEDs.length; i++) {
-          if (ucode_state_LEDs[i][0]) {
-            ctxt.fillStyle = green_on;
-          } else {
-            ctxt.fillStyle = green_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(ucode_state_LEDs[i][1], ucode_state_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Bus lights
+      for (let i=0; i<bus_value_LEDs.length; i++) {
+        if (bus_value_LEDs[i][0]) {
+          ctxt.fillStyle = blue_on;
+        } else {
+          ctxt.fillStyle = blue_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(bus_value_LEDs[i][1], bus_value_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Bus lights
-        for (let i=0; i<bus_value_LEDs.length; i++) {
-          if (bus_value_LEDs[i][0]) {
-            ctxt.fillStyle = blue_on;
-          } else {
-            ctxt.fillStyle = blue_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(bus_value_LEDs[i][1], bus_value_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Memory Address lights
+      for (let i=0; i<mem_address_LEDs.length; i++) {
+        if (mem_address_LEDs[i][0]) {
+          ctxt.fillStyle = yellow_on;
+        } else {
+          ctxt.fillStyle = yellow_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(mem_address_LEDs[i][1], mem_address_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Memory Address lights
-        for (let i=0; i<mem_address_LEDs.length; i++) {
-          if (mem_address_LEDs[i][0]) {
-            ctxt.fillStyle = yellow_on;
-          } else {
-            ctxt.fillStyle = yellow_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(mem_address_LEDs[i][1], mem_address_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the A Register lights
+      for (let i=0; i<register_A_LEDs.length; i++) {
+        if (register_A_LEDs[i][0]) {
+          ctxt.fillStyle = red_on;
+        } else {
+          ctxt.fillStyle = red_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(register_A_LEDs[i][1], register_A_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the A Register lights
-        for (let i=0; i<register_A_LEDs.length; i++) {
-          if (register_A_LEDs[i][0]) {
-            ctxt.fillStyle = red_on;
-          } else {
-            ctxt.fillStyle = red_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(register_A_LEDs[i][1], register_A_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the B Register lights
+      for (let i=0; i<register_B_LEDs.length; i++) {
+        if (register_B_LEDs[i][0]) {
+          ctxt.fillStyle = red_on;
+        } else {
+          ctxt.fillStyle = red_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(register_B_LEDs[i][1], register_B_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the B Register lights
-        for (let i=0; i<register_B_LEDs.length; i++) {
-          if (register_B_LEDs[i][0]) {
-            ctxt.fillStyle = red_on;
-          } else {
-            ctxt.fillStyle = red_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(register_B_LEDs[i][1], register_B_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Sum Register lights
+      for (let i=0; i<sum_register_LEDs.length; i++) {
+        if (sum_register_LEDs[i][0]) {
+          ctxt.fillStyle = red_on;
+        } else {
+          ctxt.fillStyle = red_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(sum_register_LEDs[i][1], sum_register_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Sum Register lights
-        for (let i=0; i<sum_register_LEDs.length; i++) {
-          if (sum_register_LEDs[i][0]) {
-            ctxt.fillStyle = red_on;
-          } else {
-            ctxt.fillStyle = red_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(sum_register_LEDs[i][1], sum_register_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Carry Flag light
+      for (let i=0; i<carry_flag_LEDs.length; i++) {
+        if (carry_flag_LEDs[i][0]) {
+          ctxt.fillStyle = green_on;
+        } else {
+          ctxt.fillStyle = green_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(carry_flag_LEDs[i][1], carry_flag_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Carry Flag light
-        for (let i=0; i<carry_flag_LEDs.length; i++) {
-          if (carry_flag_LEDs[i][0]) {
-            ctxt.fillStyle = green_on;
-          } else {
-            ctxt.fillStyle = green_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(carry_flag_LEDs[i][1], carry_flag_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Zero Flag light
+      for (let i=0; i<zero_flag_LEDs.length; i++) {
+        if (zero_flag_LEDs[i][0]) {
+          ctxt.fillStyle = green_on;
+        } else {
+          ctxt.fillStyle = green_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(zero_flag_LEDs[i][1], zero_flag_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Zero Flag light
-        for (let i=0; i<zero_flag_LEDs.length; i++) {
-          if (zero_flag_LEDs[i][0]) {
-            ctxt.fillStyle = green_on;
-          } else {
-            ctxt.fillStyle = green_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(zero_flag_LEDs[i][1], zero_flag_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Instruction Register High lights
+      for (let i=0; i<instr_high_LEDs.length; i++) {
+        if (instr_high_LEDs[i][0]) {
+          ctxt.fillStyle = blue_on;
+        } else {
+          ctxt.fillStyle = blue_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(instr_high_LEDs[i][1], instr_high_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Instruction Register High lights
-        for (let i=0; i<instr_high_LEDs.length; i++) {
-          if (instr_high_LEDs[i][0]) {
-            ctxt.fillStyle = blue_on;
-          } else {
-            ctxt.fillStyle = blue_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(instr_high_LEDs[i][1], instr_high_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Instruction Register Low lights
+      for (let i=0; i<instr_low_LEDs.length; i++) {
+        if (instr_low_LEDs[i][0]) {
+          ctxt.fillStyle = yellow_on;
+        } else {
+          ctxt.fillStyle = yellow_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(instr_low_LEDs[i][1], instr_low_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Instruction Register Low lights
-        for (let i=0; i<instr_low_LEDs.length; i++) {
-          if (instr_low_LEDs[i][0]) {
-            ctxt.fillStyle = yellow_on;
-          } else {
-            ctxt.fillStyle = yellow_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(instr_low_LEDs[i][1], instr_low_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Memory Contents lights
+      for (let i=0; i<mem_contents_LEDs.length; i++) {
+        if (mem_contents_LEDs[i][0]) {
+          ctxt.fillStyle = red_on;
+        } else {
+          ctxt.fillStyle = red_off;
         }
+        ctxt.beginPath();
+        ctxt.arc(mem_contents_LEDs[i][1], mem_contents_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
-        // Draw the Memory Contents lights
-        for (let i=0; i<mem_contents_LEDs.length; i++) {
-          if (mem_contents_LEDs[i][0]) {
-            ctxt.fillStyle = red_on;
-          } else {
-            ctxt.fillStyle = red_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(mem_contents_LEDs[i][1], mem_contents_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
+      // Draw the Control Word lights
+      for (let i=0; i<control_word_LEDs.length; i++) {
+        if (control_word_LEDs[i][0]) {
+          ctxt.fillStyle = blue_on;
+        } else {
+          ctxt.fillStyle = blue_off;
         }
-
-        // Draw the Control Word lights
-        for (let i=0; i<control_word_LEDs.length; i++) {
-          if (control_word_LEDs[i][0]) {
-            ctxt.fillStyle = blue_on;
-          } else {
-            ctxt.fillStyle = blue_off;
-          }
-          ctxt.beginPath();
-          ctxt.arc(control_word_LEDs[i][1], control_word_LEDs[i][2], 5, 0, 2 * Math.PI);
-          ctxt.fill();
-          ctxt.closePath();
-        }
+        ctxt.beginPath();
+        ctxt.arc(control_word_LEDs[i][1], control_word_LEDs[i][2], 5, 0, 2 * Math.PI);
+        ctxt.fill();
+        ctxt.closePath();
+      }
 
 
-        // ctxt.fillStyle = "#ff8888";
-        // ctxt.fillRect((w/2)-10,(h/2)-10,20,20);
+      // ctxt.fillStyle = "#ff8888";
+      // ctxt.fillRect((w/2)-10,(h/2)-10,20,20);
 
-      };
-      image.src = 'computer_background_640.png';
-    }
+    };
+  }
+}
+
+function setup_canvas() {
+  var canvas = document.getElementById('drawing_area');
+  console.log ( "setup_canvas" );
+  if (canvas != null) {
+    var ctxt = canvas.getContext('2d');
+    var w = canvas.width = 640;
+    var h = canvas.height = 546;
+
+    image.onload = function () {
+      image_loaded = true;
+
+      // Draw the background image
+      ctxt.drawImage(image,0,0);
+
+      update_canvas();
+    };
+    image.src = 'computer_background_640.png';
+  }
 }
 
 function draw_canvas() {
@@ -395,7 +414,7 @@ function mouse_down ( event ) {
     if ( (event.clientY >= clock_auto_button[0][2]) && (event.clientY <= clock_auto_button[0][2]+20) ) {
       clock_auto_button[0][0] = !clock_auto_button[0][0];
       console.log ( "auto toggled to " + clock_auto_button[0][0] );
-      setup();
+      update_canvas();
     }
   }
 }
@@ -500,15 +519,15 @@ function cpu_reset() {
 }
 
 
-window.onload = setup;
+window.onload = setup_canvas;
 
-setup();
+setup_canvas();
 
 </script>
 
 </head>
 
-<body id='page' onload="setup()" onresize="setup()" bgcolor="lightblue">
+<body id='page' onload="setup_canvas()" onresize="update_canvas()" bgcolor="lightblue">
 <!--body id='page' bgcolor="lightblue"-->
 
 <canvas id="drawing_area" onmousedown="mouse_down(event)"></canvas>
