@@ -12,11 +12,13 @@ var red_on = "#ffcc88";
 var red_off = "#bb2222";
 var yellow_on = "#ffff00";
 var yellow_off = "#e0980e";
-var blue_on = "#e4f3ff";
+var blue_on = "#bbccff";
 var blue_off = "#162560";
 var green_on = "#daff0c";
 var green_off = "#185621";
 
+var clock_speed_button = [ [1000,25,16] ];
+var clock_speeds = [ 1000, 200, 10 ];
 var clock_step_button = [ [true,69,32] ];
 var clock_auto_button = [ [false,121,29] ];
 
@@ -120,6 +122,34 @@ var control_word_LEDs = [ [true,366,497],
                           [false,493,497],
                           [true,502,497] ];
 
+function randomize_register_bits ( reg ) {
+  for (let i=0; i<reg.length; i++) {
+    if (Math.random() > 0.5) {
+      reg[i][0] = 1;
+    } else {
+      reg[i][0] = 0;
+    }
+  }
+}
+
+function randomize_all_bits () {
+  randomize_register_bits ( control_word_LEDs );
+  randomize_register_bits ( mem_contents_LEDs );
+  randomize_register_bits ( instr_low_LEDs );
+  randomize_register_bits ( instr_high_LEDs );
+  randomize_register_bits ( zero_flag_LEDs );
+  randomize_register_bits ( carry_flag_LEDs );
+  randomize_register_bits ( sum_register_LEDs );
+  randomize_register_bits ( register_B_LEDs );
+  randomize_register_bits ( register_A_LEDs );
+  randomize_register_bits ( mem_address_LEDs );
+  randomize_register_bits ( bus_value_LEDs );
+  randomize_register_bits ( ucode_state_LEDs );
+  randomize_register_bits ( ucode_ctr_LEDs );
+  randomize_register_bits ( program_ctr_LEDs );
+}
+
+
 var image = new Image();
 var image_loaded = false;
 
@@ -134,10 +164,21 @@ function update_canvas() {
       // Draw the background image
       ctxt.drawImage(image,0,0);
 
+      // Draw the "clock_speed_button"
+      ctxt.fillStyle = "#ffffff88";
+      if (clock_speed_button[0][0]<=1) {
+        ctxt.fillStyle = "#ffff0044";
+      } else if (clock_speed_button[0][0]<=2) {
+        ctxt.fillStyle = "#ffff0088";
+      } else {
+        ctxt.fillStyle = "#ffff00cc";
+      }
+      ctxt.fillRect( clock_speed_button[0][1]-20, clock_speed_button[0][2]-20, 20,20);
+
       // Draw the Run/Stop or "clock_auto_button" button
       ctxt.fillStyle = "#ffffff88";
       if (clock_auto_button[0][0]) {
-        ctxt.fillStyle = "#ffff0088";
+        ctxt.fillStyle = "#ff888888";
       }
       ctxt.fillRect( clock_auto_button[0][1]-10, clock_auto_button[0][2]-10, 20,20);
 
@@ -412,18 +453,39 @@ function mouse_down ( event ) {
   console.log ( "Mouse down with " + event.clientX + ", " + event.clientY );
   if ( (event.clientX >= clock_auto_button[0][1]) && (event.clientX <= clock_auto_button[0][1]+20) ) {
     if ( (event.clientY >= clock_auto_button[0][2]) && (event.clientY <= clock_auto_button[0][2]+20) ) {
+      run_stop();
       clock_auto_button[0][0] = !clock_auto_button[0][0];
       console.log ( "auto toggled to " + clock_auto_button[0][0] );
       update_canvas();
     }
   }
+  if ( (event.clientX >= clock_speed_button[0][1]-10) && (event.clientX <= clock_speed_button[0][1]+10) ) {
+    if ( (event.clientY >= clock_speed_button[0][2]-10) && (event.clientY <= clock_speed_button[0][2]+10) ) {
+      console.log ( "toggle speed button pressed" );
+      for (let i=0; i<clock_speeds.length; i++) {
+        console.log ( "Checking speed " + i + ": " + clock_speeds[i] );
+        if (clock_speed_button[0][0] == clock_speeds[i]) {
+          console.log ( "toggle speed" );
+          if (i < (clock_speeds.length-1)) {
+            clock_speed_button[0][0] = clock_speeds[i+1];
+          } else {
+            clock_speed_button[0][0] = clock_speeds[0];
+          }
+          console.log ( "toggled speed to " + clock_speed_button[0][0] );
+          break;
+        }
+      }
+      update_canvas();
+    }
+  }
+
 }
 
-consoleDebug = false;
+consoleDebug = true;
 stopRunning = false;
 function mainLoop()
 {
-   if (consoleDebug) console.log("sim_elf: enter mainLoop");
+   if (consoleDebug) console.log("sim: enter mainLoop");
 
    if (mainLoop.bInMainLoop)
       return;
@@ -448,9 +510,9 @@ function mainLoop()
    mainLoop.bInMainLoop = false;
 
    if (mainLoop.bStayInLoop)
-      setTimeout ("mainLoop()", 1); // Call mainLoop 1ms from now
+      setTimeout ("mainLoop()", clock_speed_button[0][0]); // Call mainLoop 1ms from now
 
-   if (consoleDebug) console.log("sim_elf: exit mainLoop");
+   if (consoleDebug) console.log("sim: exit mainLoop");
 
    return mainLoop.bStayInLoop;
 } // mainLoop
@@ -460,21 +522,21 @@ run_counter = 1;
 function run_stop() {
 	running = !running;
 	if (running) {
-		document.getElementById('RunStop').innerHTML = "<u>Run</u>/Stop";
-		document.getElementById('RunStop').setAttribute("style", "background-color: #FF9999;");
+//x		document.getElementById('RunStop').innerHTML = "<u>Run</u>/Stop";
+//x		document.getElementById('RunStop').setAttribute("style", "background-color: #FF9999;");
 		run();
 	} else {
-		document.getElementById('RunStop').innerHTML = "Run/<u>Stop</u>";
-		document.getElementById('RunStop').setAttribute("style", "");
+//x		document.getElementById('RunStop').innerHTML = "Run/<u>Stop</u>";
+//x		document.getElementById('RunStop').setAttribute("style", "");
 		stop();
-		console.log ( "Opcodes Used:" );
-		for (i=0; i<16; i++) {
-			s = " " + hex2(i) + ":  ";
-			for (j=0; j<16; j++) {
-				s += " " + hex1(used_ops[(16*i)+j]);
-			}
-			console.log ( s + "\n" );
-		}
+//x		console.log ( "Opcodes Used:" );
+//x		for (i=0; i<16; i++) {
+//x			s = " " + hex2(i) + ":  ";
+//x			for (j=0; j<16; j++) {
+//x				s += " " + hex1(used_ops[(16*i)+j]);
+//x			}
+//x			console.log ( s + "\n" );
+//x		}
 		// console.log ( "Used:\n" + used_ops );
 	}
 }
@@ -492,6 +554,7 @@ function stop() {
 function step() {
 	if (running == false) {
 		exec_next();
+/*
 		if (update_while_running) {
 			show_reg();
 			//show_Q_LED();
@@ -505,7 +568,16 @@ function step() {
 			show_Q_LED();
 			show_out_LED();
 		}
+*/
 	}
+}
+
+var count = 0;
+function exec_next() {
+  randomize_all_bits();
+  update_canvas();
+	console.log ( "Executed " + count );
+	count = count + 1;
 }
 
 function cpu_reset() {
