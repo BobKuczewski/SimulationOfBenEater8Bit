@@ -46,7 +46,7 @@ class ClockModule {
     this.clock_auto_button = [ [false,121,29] ];
     this.clock_step_button = [ [true,69,32] ];
     this.clock_speeds = [ 1000, 200, 10 ];
-    this.clock_LEDs = [ [false,232,6] ];
+    this.position = [ 232, 6 ];
   }
 
   get_state() {
@@ -54,9 +54,7 @@ class ClockModule {
   }
 
   half_tick() {
-    console.log ( "ClockModule.half_tic() called" );
     this.state = ! this.state;
-    this.clock_LEDs[0][0] = this.state;
   }
 
   get_speed_ms() {
@@ -134,19 +132,116 @@ class ClockModule {
     ctxt.fillRect( this.clock_step_button[0][1]-10, this.clock_step_button[0][2]-10, 20,20);
 
     // Draw the Clock light
-    for (let i=0; i<this.clock_LEDs.length; i++) {
-      if (this.clock_LEDs[i][0]) {
-        ctxt.fillStyle = blue_on;
+    if (this.state) {
+      ctxt.fillStyle = blue_on;
+    } else {
+      ctxt.fillStyle = blue_off;
+    }
+    ctxt.beginPath();
+    ctxt.arc(this.position[0], this.position[1], 5, 0, 2 * Math.PI);
+    ctxt.fill();
+    ctxt.closePath();
+  }
+}
+
+class uCodeCounter {
+
+  constructor () {
+    this.ucode_state = 0;
+    this.ucode_ctr_LEDs = [ [false,33,395],[false,43,395],[false,53,395] ];
+
+    this.ucode_state_LEDs = [ [false,66,390],
+                              [true,76,390],
+                              [true,86,390],
+                              [true,97,390],
+                              [true,108,390],
+                              [false,120,390] ];
+    //                        [false,124,390],
+    //                        [false,128,390] ];
+  }
+
+  get_state() {
+    return ( this.state );
+  }
+
+  update ( clock_state ) {
+    // Update the ucode counter on the appropriate clock edge
+    if (!clock_state) {
+      this.ucode_ctr_LEDs[0][0] = !this.ucode_ctr_LEDs[0][0];
+      if (!this.ucode_ctr_LEDs[0][0]) {
+        this.ucode_ctr_LEDs[1][0] = !this.ucode_ctr_LEDs[1][0];
+        if (!this.ucode_ctr_LEDs[1][0]) {
+          this.ucode_ctr_LEDs[2][0] = !this.ucode_ctr_LEDs[2][0];
+        }
+      }
+    }
+
+    // Update the ucode state based on the counter
+    this.state = 0;
+    if (this.ucode_ctr_LEDs[2][0]) {
+      this.state = this.state | 0x04;
+    }
+    if (this.ucode_ctr_LEDs[1][0]) {
+      this.state = this.state | 0x02;
+    }
+    if (this.ucode_ctr_LEDs[0][0]) {
+      this.state = this.state | 0x01;
+    }
+    if (this.state > 5) {
+      this.state = 0;
+      this.ucode_ctr_LEDs[0][0] = false;
+      this.ucode_ctr_LEDs[1][0] = false;
+      this.ucode_ctr_LEDs[2][0] = false;
+    }
+    this.ucode_state_LEDs[0][0] = true;
+    this.ucode_state_LEDs[1][0] = true;
+    this.ucode_state_LEDs[2][0] = true;
+    this.ucode_state_LEDs[3][0] = true;
+    this.ucode_state_LEDs[4][0] = true;
+    this.ucode_state_LEDs[5][0] = true;
+    this.ucode_state_LEDs[this.state][0] = false;
+
+    console.log ( "this.state before pc = " + this.state );
+    return ( this.state );
+  }
+
+  draw_ucode_ctr ( ctxt ) {
+    // Draw the Microcode Counter
+    for (let i=0; i<this.ucode_ctr_LEDs.length; i++) {
+      if (this.ucode_ctr_LEDs[i][0]) {
+        ctxt.fillStyle = red_on;
       } else {
-        ctxt.fillStyle = blue_off;
+        ctxt.fillStyle = red_off;
       }
       ctxt.beginPath();
-      ctxt.arc(this.clock_LEDs[i][1], this.clock_LEDs[i][2], 5, 0, 2 * Math.PI);
+      ctxt.arc(this.ucode_ctr_LEDs[i][1], this.ucode_ctr_LEDs[i][2], 5, 0, 2 * Math.PI);
       ctxt.fill();
       ctxt.closePath();
     }
   }
+
+  draw_ucode_state ( ctxt ) {
+    // Draw the Microcode State
+    for (let i=0; i<this.ucode_state_LEDs.length; i++) {
+      if (this.ucode_state_LEDs[i][0]) {
+        ctxt.fillStyle = green_on;
+      } else {
+        ctxt.fillStyle = green_off;
+      }
+      ctxt.beginPath();
+      ctxt.arc(this.ucode_state_LEDs[i][1], this.ucode_state_LEDs[i][2], 5, 0, 2 * Math.PI);
+      ctxt.fill();
+      ctxt.closePath();
+    }
+  }
+
+  draw(ctxt) {
+    this.draw_ucode_ctr ( ctxt );
+    this.draw_ucode_state ( ctxt );
+  }
 }
+
+
 
 
 function decode ( instruction ) {
@@ -191,6 +286,7 @@ var memory = [
 ];
 
 clock = new ClockModule();
+ucode_ctr = new uCodeCounter();
 
 var x1_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var x2_LEDs = [ [true,55,111] ];  // Red near Address Register DIP Switch
@@ -199,20 +295,6 @@ var program_ctr_LEDs = [ [false,386,6],
                          [false,395,6],
                          [false,404,6],
                          [false,413,6] ];
-
-var ucode_ctr_LEDs = [ [false,33,395],
-                       [false,43,395],
-                       [false,53,395] ];
-
-var ucode_state_LEDs = [ [false,66,390],
-                         [true,76,390],
-                         [true,86,390],
-                         [true,97,390],
-                         [true,108,390],
-                         [false,120,390] ];
-
-//                         [false,124,390],
-//                         [false,128,390] ];
 
 var bus_value_LEDs = [ [false,289,6],
                        [true,298,6],
@@ -337,7 +419,9 @@ function update_canvas() {
       // Draw the background image
       ctxt.drawImage(image,0,0);
 
+      // Draw the modules
       clock.draw(ctxt);
+      ucode_ctr.draw(ctxt);
 
       // Draw the x1 light
       for (let i=0; i<x1_LEDs.length; i++) {
@@ -373,32 +457,6 @@ function update_canvas() {
         }
         ctxt.beginPath();
         ctxt.arc(program_ctr_LEDs[i][1], program_ctr_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
-
-      // Draw the Microcode Counter
-      for (let i=0; i<ucode_ctr_LEDs.length; i++) {
-        if (ucode_ctr_LEDs[i][0]) {
-          ctxt.fillStyle = red_on;
-        } else {
-          ctxt.fillStyle = red_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(ucode_ctr_LEDs[i][1], ucode_ctr_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
-
-      // Draw the Microcode State
-      for (let i=0; i<ucode_state_LEDs.length; i++) {
-        if (ucode_state_LEDs[i][0]) {
-          ctxt.fillStyle = green_on;
-        } else {
-          ctxt.fillStyle = green_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(ucode_state_LEDs[i][1], ucode_state_LEDs[i][2], 5, 0, 2 * Math.PI);
         ctxt.fill();
         ctxt.closePath();
       }
@@ -690,45 +748,11 @@ function exec_next() {
   // Toggle the clock
   clock.half_tick();
 
-  // Update the ucode counter on the appropriate clock edge
-  if (!clock.get_state()) {
-    ucode_ctr_LEDs[0][0] = !ucode_ctr_LEDs[0][0];
-    if (!ucode_ctr_LEDs[0][0]) {
-      ucode_ctr_LEDs[1][0] = !ucode_ctr_LEDs[1][0];
-      if (!ucode_ctr_LEDs[1][0]) {
-        ucode_ctr_LEDs[2][0] = !ucode_ctr_LEDs[2][0];
-      }
-    }
-  }
+  // Update the ucode counter
+  ucode_ctr.update ( clock.get_state() );
 
-  // Update the ucode state based on the counter
-  let ucv = 0;
-  if (ucode_ctr_LEDs[2][0]) {
-    ucv = ucv | 0x04;
-  }
-  if (ucode_ctr_LEDs[1][0]) {
-    ucv = ucv | 0x02;
-  }
-  if (ucode_ctr_LEDs[0][0]) {
-    ucv = ucv | 0x01;
-  }
-  if (ucv > 5) {
-    ucv = 0;
-    ucode_ctr_LEDs[0][0] = false;
-    ucode_ctr_LEDs[1][0] = false;
-    ucode_ctr_LEDs[2][0] = false;
-  }
-  ucode_state_LEDs[0][0] = true;
-  ucode_state_LEDs[1][0] = true;
-  ucode_state_LEDs[2][0] = true;
-  ucode_state_LEDs[3][0] = true;
-  ucode_state_LEDs[4][0] = true;
-  ucode_state_LEDs[5][0] = true;
-  ucode_state_LEDs[ucv][0] = false;
 
-  console.log ( "ucv before pc = " + ucv );
-
-  if ( clock.get_state() && (ucv == 3) ) {
+  if ( clock.get_state() && (ucode_ctr.get_state() == 3) ) {
     // Execute the current instruction
     let pc = 0;
     if (program_ctr_LEDs[0][0]) {
