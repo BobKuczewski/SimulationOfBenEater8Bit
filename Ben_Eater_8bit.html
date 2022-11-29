@@ -53,10 +53,24 @@ class Register {
   get_state() {
     return ( this.state );
   }
+  get_value() {
+    let value = 0;
+    let n = this.state.length;
+    let bit = n-1;
+    for (let i=0; i<n; i++) {
+      if (this.state[i]) {
+        value = value | (0x01 << bit);
+      }
+      bit = bit - 1;
+    }
+    return ( value );
+  }
   set_value ( value ) {
+    // The register indexes are bit positions, so reverse
+    // value = 1101  gives [ 1, 0, 1, 1 ]
     this.state = [];
     let n = this.position.length;
-    let bit = 0;
+    let bit = n-1;
     for (let i=0; i<n; i++) {
       // if ((value >> bit) & 0x01) > 0) {
       if ((value & (0x01 << bit)) > 0) {
@@ -64,7 +78,7 @@ class Register {
       } else {
         this.state.push ( false );
       }
-      bit = bit + 1;
+      bit = bit - 1;
     }
   }
   randomize_bits () {
@@ -95,6 +109,10 @@ class Register {
       ctxt.closePath();
     }
     console.log ( "  finished Draw Register " + this.reg_name );
+  }
+  toString() {
+    let s = "Register " + this.reg_name + " = " + this.get_value();
+    return ( s );
   }
 }
 
@@ -306,7 +324,7 @@ class uCodeCounter extends Register {
 
 class ARegister extends Register {
   constructor () {
-    super("ARegister");
+    super("A Register");
     this.on_color = red_on;
     this.off_color = red_off;
     this.radius = 5;
@@ -321,12 +339,28 @@ class ARegister extends Register {
 
 class BRegister extends Register {
   constructor () {
-    super("BRegister");
+    super("B Register");
     this.on_color = red_on;
     this.off_color = red_off;
     this.radius = 5;
     this.state = [false,true,false,true,false,true,false,true];
     this.position = [ [424,290],[434,290],[445,290],[455,290],[466,290],[477,290],[488,290],[498,290] ];
+  }
+  draw(ctxt) {
+    super.draw(ctxt);
+  }
+}
+
+
+class ProgramCounter extends Register {
+  constructor () {
+    super("Program Counter");
+    this.on_color = green_on;
+    this.off_color = green_off;
+    this.radius = 5;
+    // Note that index 0 corresponds to bit 0 (LSB)
+    this.state = [false,false,false,false];
+    this.position = [ [386,6], [395,6], [404,6], [413,6] ];
   }
   draw(ctxt) {
     super.draw(ctxt);
@@ -380,16 +414,12 @@ test_reg = new Register("Test");
 
 clock = new ClockModule("Clock");
 ucode_ctr = new uCodeCounter();
+prog_ctr = new ProgramCounter();
 a_reg = new ARegister();
 b_reg = new BRegister();
 
 var x1_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var x2_LEDs = [ [true,55,111] ];  // Red near Address Register DIP Switch
-
-var program_ctr_LEDs = [ [false,386,6],
-                         [false,395,6],
-                         [false,404,6],
-                         [false,413,6] ];
 
 var bus_value_LEDs = [ [false,289,6],
                        [true,298,6],
@@ -528,17 +558,7 @@ function update_canvas() {
       }
 
       // Draw the Program Counter
-      for (let i=0; i<program_ctr_LEDs.length; i++) {
-        if (program_ctr_LEDs[i][0]) {
-          ctxt.fillStyle = green_on;
-        } else {
-          ctxt.fillStyle = green_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(program_ctr_LEDs[i][1], program_ctr_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
+      prog_ctr.draw ( ctxt );
 
       // Draw the Bus lights
       for (let i=0; i<bus_value_LEDs.length; i++) {
@@ -567,6 +587,7 @@ function update_canvas() {
       }
 
       a_reg.draw ( ctxt );
+
       b_reg.randomize_bits();
       b_reg.draw ( ctxt );
 
@@ -800,19 +821,7 @@ function exec_next() {
 
   if ( clock.get_state() && (ucode_ctr.get_state() == 3) ) {
     // Execute the current instruction
-    let pc = 0;
-    if (program_ctr_LEDs[0][0]) {
-      pc = pc | 0x08;
-    }
-    if (program_ctr_LEDs[1][0]) {
-      pc = pc | 0x04;
-    }
-    if (program_ctr_LEDs[2][0]) {
-      pc = pc | 0x02;
-    }
-    if (program_ctr_LEDs[3][0]) {
-      pc = pc | 0x01;
-    }
+    let pc = prog_ctr.get_value();
     console.log ( "Execute " + memory[pc] + " = " + decode(memory[pc]) );
 
     let lower = memory[pc] & 0x0f;
@@ -841,12 +850,11 @@ function exec_next() {
     }
 
     // Increment the program counter as needed
-    pc = pc + 1;
+    pc = (pc + 1) % 16;
     console.log ( "PC = " + pc );
-    program_ctr_LEDs[0][0] = ( (pc & 0x08) != 0 );
-    program_ctr_LEDs[1][0] = ( (pc & 0x04) != 0 );
-    program_ctr_LEDs[2][0] = ( (pc & 0x02) != 0 );
-    program_ctr_LEDs[3][0] = ( (pc & 0x01) != 0 );
+    prog_ctr.set_value ( pc );
+    console.log ( "pc = " + pc );
+    console.log ( "prog_ctr = " + prog_ctr );
   }
 
   // Set all others to random values (used during development)
