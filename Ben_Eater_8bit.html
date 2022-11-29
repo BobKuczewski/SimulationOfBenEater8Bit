@@ -91,7 +91,7 @@ class Register {
     }
   }
   draw ( ctxt ) {
-    console.log ( "Draw Register " + this.reg_name );
+    // console.log ( "Draw Register " + this.reg_name );
     // Draw the Register lights
     for (let i=0; i<this.position.length; i++) {
       let s = false;
@@ -108,7 +108,7 @@ class Register {
       ctxt.fill();
       ctxt.closePath();
     }
-    console.log ( "  finished Draw Register " + this.reg_name );
+    // console.log ( "  finished Draw Register " + this.reg_name );
   }
   toString() {
     let s = "Register " + this.reg_name + " = " + this.get_value();
@@ -281,7 +281,7 @@ class uCodeCounter extends Register {
     this.ucode_state_LEDs[5][0] = true;
     this.ucode_state_LEDs[this.state][0] = false;
 
-    console.log ( "this.state before pc = " + this.state );
+    // console.log ( "this.state before pc = " + this.state );
     return ( this.state );
   }
 
@@ -527,7 +527,7 @@ function update_canvas() {
       ctxt.drawImage(image,0,0);
 
       // Draw the modules
-      console.log ( "About to draw clock" );
+      // console.log ( "About to draw clock" );
       clock.draw(ctxt);
       ucode_ctr.draw(ctxt);
       test_reg.draw(ctxt);
@@ -829,6 +829,7 @@ function exec_next() {
 
     if (upper == 0x00)        { // "NOP " + lower );
     } else if (upper == 0x01) { // "LDA " + lower );
+      console.log ( "  A = memory[" + lower + "] = " + memory[lower] );
       let value = memory[lower];
       a_reg.set_value ( value );
     } else if (upper == 0x02) { // "ADD " + lower );
