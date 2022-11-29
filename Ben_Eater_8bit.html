@@ -7,7 +7,46 @@
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
 <script>
+
+/* Instruction set:
+NOP = 0000 XXXX
+LDA = 0001 addr
+ADD = 0010 addr
+SUB = 0011 addr
+STA = 0100 addr
+LDI = 0101 value
+JMP = 0110 addr
+JC  = 0111 addr
+JZ  = 1000 addr
+    = 1001
+    = 1010
+    = 1011
+    = 1100
+    = 1101
+OUT = 1110 XXXX  // Could use XXXX for In/Out and multiple channels
+HLT = 1111 XXXX  // Could use XXXX for other instructions, push, pop, chs, etc.
+*/
+
 var memory = [
+/* 0 */ 0x1e,  // LDA E (ff)
+/* 1 */ 0x55,  // LDI 5
+/* 2 */ 0x2f,  // ADD F 5
+/* 3 */ 0x3d,  // SUB F 1
+/* 4 */ 0xf0,  // HLT
+/* 5 */ 0x60,  // JMP 0
+/* 6 */ 0x00,
+/* 7 */ 0x00,
+/* 8 */ 0x00,
+/* 9 */ 0x00,
+/* a */ 0x00,
+/* b */ 0x00,
+/* c */ 0x00,
+/* d */ 0x01,
+/* e */ 0xff,
+/* f */ 0x05,
+];
+
+/* Program to shift A along (works)
   0x18,
   0x19,
   0x1a,
@@ -24,7 +63,8 @@ var memory = [
   0x20,
   0x40,
   0x80
-/*
+*/
+/* Program to multiply?
   0x1e,  // 00: LDA 14
   0x3c,  // 01: SUB 12
   0x76,  // 02: JC 6
@@ -42,7 +82,6 @@ var memory = [
   0x07,  // 0E: (x)
   0x05   // 0F: (y)
 */
-];
 
 /*
 // Program to shift A to the left
@@ -63,25 +102,6 @@ var memory = [
   0x20,
   0x40,
   0x80
-*/
-
-/*
-NOP = 0000 XXXX
-LDA = 0001 addr
-ADD = 0010 addr
-SUB = 0011 addr
-STA = 0100 addr
-LDI = 0101 value
-JMP = 0110 addr
-JC  = 0111 addr
-JZ  = 1000 addr
-    = 1001
-    = 1010
-    = 1011
-    = 1100
-    = 1101
-OUT = 1110 XXXX  // Could use XXXX for In/Out and multiple channels
-HLT = 1111 XXXX  // Could use XXXX for other instructions, push, pop, chs, etc.
 */
 
 var consoleDebug = false;
@@ -410,6 +430,21 @@ class BRegister extends Register {
 }
 
 
+class SumRegister extends Register { // sum_register_LEDs
+  constructor () {
+    super("Sum Register");
+    this.on_color = red_on;
+    this.off_color = red_off;
+    this.radius = 5;
+    this.state = [false,true,false,true,false,true,false,true];
+    this.position = [ [368,220],[377,221],[389,221],[400,222],[409,222],[419,222],[429,222],[441,220] ];
+  }
+  draw(ctxt) {
+    super.draw(ctxt);
+  }
+}
+
+
 class ProgramCounter extends Register {
   constructor () {
     super("Program Counter");
@@ -456,6 +491,7 @@ ucode_ctr = new uCodeCounter();
 prog_ctr = new ProgramCounter();
 a_reg = new ARegister();
 b_reg = new BRegister();
+sum_reg = new SumRegister();
 
 var x1_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var x2_LEDs = [ [true,55,111] ];  // Red near Address Register DIP Switch
@@ -626,10 +662,9 @@ function update_canvas() {
 
       a_reg.draw ( ctxt );
 
-      b_reg.randomize_bits();
       b_reg.draw ( ctxt );
 
-
+/*
       // Draw the Sum Register lights
       for (let i=0; i<sum_register_LEDs.length; i++) {
         if (sum_register_LEDs[i][0]) {
@@ -642,6 +677,8 @@ function update_canvas() {
         ctxt.fill();
         ctxt.closePath();
       }
+*/
+      sum_reg.draw ( ctxt );
 
       // Draw the Carry Flag light
       for (let i=0; i<carry_flag_LEDs.length; i++) {
@@ -870,16 +907,28 @@ function exec_next() {
       console.log ( "  A = memory[" + lower + "] = " + memory[lower] );
       let value = memory[lower];
       a_reg.set_value ( value );
+      sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
     } else if (upper == 0x02) { // "ADD " + lower );
+      console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
+      let value = memory[lower];
+      b_reg.set_value ( value );
+      sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
+      a_reg.set_value ( sum_reg.get_value() );
     } else if (upper == 0x03) { // "SUB " + lower );
-      // let value = get ( register_
-
+      console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
+      let value = memory[lower];
+      b_reg.set_value ( value );
+      sum_reg.set_value ( a_reg.get_value() - b_reg.get_value() );
+      a_reg.set_value ( sum_reg.get_value() );
     } else if (upper == 0x04) { // "STA " + lower );
     } else if (upper == 0x05) { // "LDI " + lower );
+      console.log ( "  A = " + lower );
+      a_reg.set_value ( lower );
+      sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
     } else if (upper == 0x06) { // "JMP " + lower );
       console.log ( "  JMP " + lower );
       let value = memory[lower];
-      pc = lower - 1;
+      pc = lower - 1; // Jump before destination since pc will be incremented
     } else if (upper == 0x07) { // "JC  " + lower );
     } else if (upper == 0x08) { // "JZ  " + lower );
     } else if (upper == 0x09) { // "?09 " + lower );
@@ -889,6 +938,9 @@ function exec_next() {
     } else if (upper == 0x0d) { // "?0D " + lower );
     } else if (upper == 0x0e) { // "OUT " + lower );
     } else if (upper == 0x0f) { // "HLT " + lower );
+      stop();
+      clock.clock_auto_button[0][0] = false;
+      stop();
     }
 
     // Increment the program counter as needed
@@ -896,7 +948,7 @@ function exec_next() {
     // console.log ( "PC = " + pc );
     prog_ctr.set_value ( pc );
     // console.log ( "pc = " + pc );
-    console.log ( "prog_ctr = " + prog_ctr );
+    // console.log ( "prog_ctr = " + prog_ctr );
   }
 
   // Set all others to random values (used during development)
