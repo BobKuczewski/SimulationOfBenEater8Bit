@@ -25,6 +25,121 @@ JZ  = 1000 addr
 OUT = 1110 XXXX  // Could use XXXX for In/Out and multiple channels
 HLT = 1111 XXXX  // Could use XXXX for other instructions, push, pop, chs, etc.
 */
+
+var consoleDebug = false;
+
+var red_on = "#ffcc88";
+var red_off = "#bb2222";
+var yellow_on = "#ffff00";
+var yellow_off = "#e0980e";
+var blue_on = "#bbccff";
+var blue_off = "#162560";
+var green_on = "#daff0c";
+var green_off = "#185621";
+
+
+class ClockModule {
+
+  constructor () {
+    this.state = false;
+    this.clock_speed_button = [ [200,25,16] ];
+    this.clock_auto_button = [ [false,121,29] ];
+    this.clock_step_button = [ [true,69,32] ];
+    this.clock_LEDs = [ [false,232,6] ];
+  }
+
+  half_tick() {
+    console.log ( "ClockModule.half_tic() called" );
+    this.state = ! this.state;
+    this.clock_LEDs[0][0] = this.state;
+  }
+
+  mouse_up ( event ) {
+    if ( (event.clientX >= this.clock_step_button[0][1]) && (event.clientX <= this.clock_step_button[0][1]+20) ) {
+      if ( (event.clientY >= this.clock_step_button[0][2]) && (event.clientY <= this.clock_step_button[0][2]+20) ) {
+        if (consoleDebug) console.log ( "Clock up with " + event.clientX + ", " + event.clientY );
+        step();
+        update_canvas();
+      }
+    }
+  }
+
+  mouse_down ( event ) {
+    if ( (event.clientX >= this.clock_step_button[0][1]) && (event.clientX <= this.clock_step_button[0][1]+20) ) {
+      if ( (event.clientY >= this.clock_step_button[0][2]) && (event.clientY <= this.clock_step_button[0][2]+20) ) {
+        if (consoleDebug) console.log ( "Clock down with " + event.clientX + ", " + event.clientY );
+        step();
+        update_canvas();
+      }
+    }
+    if ( (event.clientX >= this.clock_auto_button[0][1]) && (event.clientX <= this.clock_auto_button[0][1]+20) ) {
+      if ( (event.clientY >= this.clock_auto_button[0][2]) && (event.clientY <= this.clock_auto_button[0][2]+20) ) {
+        run_stop();
+        this.clock_auto_button[0][0] = !this.clock_auto_button[0][0];
+        if (consoleDebug) console.log ( "auto toggled to " + this.clock_auto_button[0][0] );
+        update_canvas();
+      }
+    }
+    if ( (event.clientX >= this.clock_speed_button[0][1]-10) && (event.clientX <= this.clock_speed_button[0][1]+10) ) {
+      if ( (event.clientY >= this.clock_speed_button[0][2]-10) && (event.clientY <= this.clock_speed_button[0][2]+10) ) {
+        if (consoleDebug) console.log ( "toggle speed button pressed" );
+        for (let i=0; i<clock_speeds.length; i++) {
+          if (consoleDebug) console.log ( "Checking speed " + i + ": " + clock_speeds[i] );
+          if (this.clock_speed_button[0][0] == clock_speeds[i]) {
+            if (consoleDebug) console.log ( "toggle speed" );
+            if (i < (clock_speeds.length-1)) {
+              this.clock_speed_button[0][0] = clock_speeds[i+1];
+            } else {
+              this.clock_speed_button[0][0] = clock_speeds[0];
+            }
+            if (consoleDebug) console.log ( "toggled speed to " + this.clock_speed_button[0][0] );
+            break;
+          }
+        }
+        update_canvas();
+      }
+    }
+  }
+
+  draw(ctxt) {
+    // Draw the "clock_speed_button"
+    ctxt.fillStyle = "#ffffff44";
+    if (this.clock_speed_button[0][0]>=1000) {
+      ctxt.fillStyle = "#0000ff44";
+    } else if (this.clock_speed_button[0][0]>=200) {
+      ctxt.fillStyle = "#00ff0044";
+    } else {
+      ctxt.fillStyle = "#ff000044";
+    }
+    ctxt.fillRect( this.clock_speed_button[0][1]-20, this.clock_speed_button[0][2]-20, 20,20);
+
+    // Draw the Run/Stop or "clock_auto_button" button
+    ctxt.fillStyle = "#ffffff88";
+    if (this.clock_auto_button[0][0]) {
+      ctxt.fillStyle = "#ff888888";
+    }
+    ctxt.fillRect( this.clock_auto_button[0][1]-10, this.clock_auto_button[0][2]-10, 20,20);
+
+    // Draw the Single Step or "clock_step_button" button
+    ctxt.fillStyle = "#ffffff88";
+    ctxt.fillRect( this.clock_step_button[0][1]-10, this.clock_step_button[0][2]-10, 20,20);
+
+    // Draw the Clock light
+    for (let i=0; i<this.clock_LEDs.length; i++) {
+      if (this.clock_LEDs[i][0]) {
+        ctxt.fillStyle = blue_on;
+      } else {
+        ctxt.fillStyle = blue_off;
+      }
+      ctxt.beginPath();
+      ctxt.arc(this.clock_LEDs[i][1], this.clock_LEDs[i][2], 5, 0, 2 * Math.PI);
+      ctxt.fill();
+      ctxt.closePath();
+    }
+  }
+}
+
+
 function decode ( instruction ) {
   let out = "";
   let lower = instruction & 0x0f;
@@ -66,18 +181,9 @@ var memory = [
   0x05   // 0F: (y)
 ];
 
-var consoleDebug = false;
+clock = new ClockModule();
 
-var red_on = "#ffcc88";
-var red_off = "#bb2222";
-var yellow_on = "#ffff00";
-var yellow_off = "#e0980e";
-var blue_on = "#bbccff";
-var blue_off = "#162560";
-var green_on = "#daff0c";
-var green_off = "#185621";
-
-var clock_speed_button = [ [1000,25,16] ];
+var clock_speed_button = [ [200,25,16] ];
 var clock_speeds = [ 1000, 200, 10 ];
 var clock_step_button = [ [true,69,32] ];
 var clock_auto_button = [ [false,121,29] ];
@@ -653,6 +759,7 @@ var count = 0;
 function exec_next() {
 
   // Toggle the clock
+  clock.half_tick();
   clock_LEDs[0][0] = !clock_LEDs[0][0];
 
   // Update the ucode counter on the appropriate clock edge
