@@ -31,14 +31,14 @@ var memory = [ // Fibonacci Numbers up to 144
 /* 0 */ 0x51,  // ldi 1   ; 1
 /* 1 */ 0x4e,  // sta e   ; y(e) = 1
 /* 2 */ 0x50,  // ldi 0   ; x = 0
-/* 3 */ 0xe0,  // out
-/* 4 */ 0x2e,  // add [e] ; x + y
-/* 5 */ 0x4f,  // sta [f] ; z = x + y
-/* 6 */ 0x1e,  // lda [e] ; y
-/* 7 */ 0x4d,  // sta [d] ; x = y
-/* 8 */ 0x1f,  // lda [f] ; z
-/* 9 */ 0x4e,  // sta [e] ; y = z
-/* a */ 0x1d,  // lda [d] ; x
+/* 3 */ 0x2e,  // add [e] ; x + y
+/* 4 */ 0x4f,  // sta [f] ; z = x + y
+/* 5 */ 0x1e,  // lda [e] ; y
+/* 6 */ 0x4d,  // sta [d] ; x = y
+/* 7 */ 0x1f,  // lda [f] ; z
+/* 8 */ 0x4e,  // sta [e] ; y = z
+/* 9 */ 0x1d,  // lda [d] ; x
+/* a */ 0xe0,  // out
 /* b */ 0x70,  // jc  0   ; jump carry to next Fib
 /* c */ 0x63,  // jmp 3   ; keep adding
 /* d */ 0x00,  // x
