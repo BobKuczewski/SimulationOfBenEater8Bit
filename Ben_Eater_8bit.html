@@ -54,6 +54,10 @@ class ClockModule {
     this.clock_LEDs[0][0] = this.state;
   }
 
+  get_speed_ms() {
+    return ( this.clock_speed_button[0][0] );
+  }
+
   mouse_up ( event ) {
     if ( (event.clientX >= this.clock_step_button[0][1]) && (event.clientX <= this.clock_step_button[0][1]+20) ) {
       if ( (event.clientY >= this.clock_step_button[0][2]) && (event.clientY <= this.clock_step_button[0][2]+20) ) {
@@ -335,6 +339,8 @@ function update_canvas() {
       // Draw the background image
       ctxt.drawImage(image,0,0);
 
+      clock.draw(ctxt);
+      /*
       // Draw the "clock_speed_button"
       ctxt.fillStyle = "#ffffff44";
       if (clock_speed_button[0][0]>=1000) {
@@ -369,6 +375,7 @@ function update_canvas() {
         ctxt.fill();
         ctxt.closePath();
       }
+      */
 
       // Draw the x1 light
       for (let i=0; i<x1_LEDs.length; i++) {
@@ -621,6 +628,8 @@ function draw_canvas() {
 }
 
 function mouse_up ( event ) {
+  clock.mouse_up ( event );
+  /*
   if ( (event.clientX >= clock_step_button[0][1]) && (event.clientX <= clock_step_button[0][1]+20) ) {
     if ( (event.clientY >= clock_step_button[0][2]) && (event.clientY <= clock_step_button[0][2]+20) ) {
       if (consoleDebug) console.log ( "Clock up with " + event.clientX + ", " + event.clientY );
@@ -628,9 +637,12 @@ function mouse_up ( event ) {
       update_canvas();
     }
   }
+  */
 }
 
 function mouse_down ( event ) {
+  clock.mouse_down ( event );
+  /*
   if ( (event.clientX >= clock_step_button[0][1]) && (event.clientX <= clock_step_button[0][1]+20) ) {
     if ( (event.clientY >= clock_step_button[0][2]) && (event.clientY <= clock_step_button[0][2]+20) ) {
       if (consoleDebug) console.log ( "Clock down with " + event.clientX + ", " + event.clientY );
@@ -665,7 +677,7 @@ function mouse_down ( event ) {
       update_canvas();
     }
   }
-
+  */
 }
 
 stopRunning = false;
@@ -696,7 +708,8 @@ function mainLoop()
    mainLoop.bInMainLoop = false;
 
    if (mainLoop.bStayInLoop)
-      setTimeout ("mainLoop()", clock_speed_button[0][0]); // Call mainLoop 1ms from now
+      // setTimeout ("mainLoop()", clock_speed_button[0][0]); // Call mainLoop 1ms from now
+      setTimeout ("mainLoop()", clock.get_speed_ms()); // Call mainLoop 1ms from now
 
    if (consoleDebug) console.log("sim: exit mainLoop");
 
