@@ -430,7 +430,7 @@ class BRegister extends Register {
 }
 
 
-class SumRegister extends Register { // sum_register_LEDs
+class SumRegister extends Register {
   constructor () {
     super("Sum Register");
     this.on_color = red_on;
@@ -454,6 +454,36 @@ class ProgramCounter extends Register {
     // Note that index 0 corresponds to bit 0 (LSB)
     this.state = [false,false,false,false];
     this.position = [ [386,6], [395,6], [404,6], [413,6] ];
+  }
+  draw(ctxt) {
+    super.draw(ctxt);
+  }
+}
+
+
+class InstructionOperation extends Register {
+  constructor () {
+    super("Instruction Operation");
+    this.on_color = blue_on;
+    this.off_color = blue_off;
+    this.radius = 5;
+    // Note that index 0 corresponds to bit 0 (LSB)
+    this.state = [true,false,false,false];
+    this.position = [ [148,369], [157,370], [166,371], [177,371] ];
+  }
+  draw(ctxt) {
+    super.draw(ctxt);
+  }
+}
+class InstructionData extends Register {
+  constructor () {
+    super("Instruction Data");
+    this.on_color = yellow_on;
+    this.off_color = yellow_off;
+    this.radius = 5;
+    // Note that index 0 corresponds to bit 0 (LSB)
+    this.state = [false,false,false,true];
+    this.position = [ [187,371], [197,371], [207,371], [217,371] ];
   }
   draw(ctxt) {
     super.draw(ctxt);
@@ -489,6 +519,8 @@ function decode ( instruction ) {
 clock = new ClockModule("Clock");
 ucode_ctr = new uCodeCounter();
 prog_ctr = new ProgramCounter();
+inst_op = new InstructionOperation();
+inst_data = new InstructionData();
 a_reg = new ARegister();
 b_reg = new BRegister();
 sum_reg = new SumRegister();
@@ -510,28 +542,9 @@ var mem_address_LEDs = [ [false,147,145],
                          [false,166,145],
                          [true,176,146] ];
 
-var sum_register_LEDs = [ [false,368,220],
-                          [true,377,221],
-                          [false,389,221],
-                          [true,400,222],
-                          [false,409,222],
-                          [true,419,222],
-                          [false,429,222],
-                          [true,441,220] ];
-
 var carry_flag_LEDs = [ [true,562,133] ];
 
 var zero_flag_LEDs = [ [true,572,133] ];
-
-var instr_high_LEDs = [ [false,148,369],
-                        [true,157,370],
-                        [false,166,371],
-                        [true,177,371] ];
-
-var instr_low_LEDs = [ [false,187,371],
-                       [true,197,371],
-                       [false,207,371],
-                       [true,217,371] ];
 
 var mem_contents_LEDs = [ [true,138,225],
                           [false,147,225],
@@ -559,6 +572,26 @@ var control_word_LEDs = [ [true,366,497],
                           [false,493,497],
                           [true,502,497] ];
 
+function hex1 ( v ) {
+	return ( (v % 16).toString(16).toUpperCase() );
+}
+
+function hex2 ( v ) {
+	h = (v % 256).toString(16).toUpperCase();
+	while (h.length < 2) {
+		h = "0" + h;
+	}
+	return ( h );
+}
+
+function hex4 ( v ) {
+	h = (v % 65536).toString(16).toUpperCase();
+	while (h.length < 4) {
+		h = "0" + h;
+	}
+	return ( h );
+}
+
 function randomize_register_bits ( reg ) {
   for (let i=0; i<reg.length; i++) {
     if (Math.random() > 0.5) {
@@ -572,11 +605,11 @@ function randomize_register_bits ( reg ) {
 function randomize_all_bits () {
   randomize_register_bits ( control_word_LEDs );
   randomize_register_bits ( mem_contents_LEDs );
-  randomize_register_bits ( instr_low_LEDs );
-  randomize_register_bits ( instr_high_LEDs );
+  // randomize_register_bits ( instr_low_LEDs );
+  // randomize_register_bits ( instr_high_LEDs );
   randomize_register_bits ( zero_flag_LEDs );
   randomize_register_bits ( carry_flag_LEDs );
-  randomize_register_bits ( sum_register_LEDs );
+  // randomize_register_bits ( sum_register_LEDs );
   // randomize_register_bits ( register_B_LEDs );
   // randomize_register_bits ( register_A_LEDs );
   randomize_register_bits ( mem_address_LEDs );
@@ -664,20 +697,6 @@ function update_canvas() {
 
       b_reg.draw ( ctxt );
 
-/*
-      // Draw the Sum Register lights
-      for (let i=0; i<sum_register_LEDs.length; i++) {
-        if (sum_register_LEDs[i][0]) {
-          ctxt.fillStyle = red_on;
-        } else {
-          ctxt.fillStyle = red_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(sum_register_LEDs[i][1], sum_register_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
-*/
       sum_reg.draw ( ctxt );
 
       // Draw the Carry Flag light
@@ -706,6 +725,7 @@ function update_canvas() {
         ctxt.closePath();
       }
 
+      /*
       // Draw the Instruction Register High lights
       for (let i=0; i<instr_high_LEDs.length; i++) {
         if (instr_high_LEDs[i][0]) {
@@ -731,6 +751,10 @@ function update_canvas() {
         ctxt.fill();
         ctxt.closePath();
       }
+      */
+
+      inst_op.draw ( ctxt );
+      inst_data.draw ( ctxt );
 
       // Draw the Memory Contents lights
       for (let i=0; i<mem_contents_LEDs.length; i++) {
@@ -897,10 +921,13 @@ function exec_next() {
   if ( clock.get_state() && (ucode_ctr.get_state() == 3) ) {
     // Execute the current instruction
     let pc = prog_ctr.get_value();
-    console.log ( "Execute " + memory[pc] + " = " + decode(memory[pc]) );
+    console.log ( "Execute " + hex2(memory[pc]) + " = " + decode(memory[pc]) );
 
     let lower = memory[pc] & 0x0f;
     let upper = (memory[pc] >> 4) & 0x0f;
+
+    inst_op.set_value ( upper );
+    inst_data.set_value ( lower );
 
     if (upper == 0x00)        { // "NOP " + lower );
     } else if (upper == 0x01) { // "LDA " + lower );
