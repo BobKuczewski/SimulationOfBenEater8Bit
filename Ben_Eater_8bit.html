@@ -45,7 +45,12 @@ class ClockModule {
     this.clock_speed_button = [ [200,25,16] ];
     this.clock_auto_button = [ [false,121,29] ];
     this.clock_step_button = [ [true,69,32] ];
+    this.clock_speeds = [ 1000, 200, 10 ];
     this.clock_LEDs = [ [false,232,6] ];
+  }
+
+  get_state() {
+    return ( this.state );
   }
 
   half_tick() {
@@ -87,14 +92,14 @@ class ClockModule {
     if ( (event.clientX >= this.clock_speed_button[0][1]-10) && (event.clientX <= this.clock_speed_button[0][1]+10) ) {
       if ( (event.clientY >= this.clock_speed_button[0][2]-10) && (event.clientY <= this.clock_speed_button[0][2]+10) ) {
         if (consoleDebug) console.log ( "toggle speed button pressed" );
-        for (let i=0; i<clock_speeds.length; i++) {
-          if (consoleDebug) console.log ( "Checking speed " + i + ": " + clock_speeds[i] );
-          if (this.clock_speed_button[0][0] == clock_speeds[i]) {
+        for (let i=0; i<this.clock_speeds.length; i++) {
+          if (consoleDebug) console.log ( "Checking speed " + i + ": " + this.clock_speeds[i] );
+          if (this.clock_speed_button[0][0] == this.clock_speeds[i]) {
             if (consoleDebug) console.log ( "toggle speed" );
-            if (i < (clock_speeds.length-1)) {
-              this.clock_speed_button[0][0] = clock_speeds[i+1];
+            if (i < (this.clock_speeds.length-1)) {
+              this.clock_speed_button[0][0] = this.clock_speeds[i+1];
             } else {
-              this.clock_speed_button[0][0] = clock_speeds[0];
+              this.clock_speed_button[0][0] = this.clock_speeds[0];
             }
             if (consoleDebug) console.log ( "toggled speed to " + this.clock_speed_button[0][0] );
             break;
@@ -186,13 +191,6 @@ var memory = [
 ];
 
 clock = new ClockModule();
-
-var clock_speed_button = [ [200,25,16] ];
-var clock_speeds = [ 1000, 200, 10 ];
-var clock_step_button = [ [true,69,32] ];
-var clock_auto_button = [ [false,121,29] ];
-
-var clock_LEDs = [ [false,232,6] ];
 
 var x1_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var x2_LEDs = [ [true,55,111] ];  // Red near Address Register DIP Switch
@@ -340,42 +338,6 @@ function update_canvas() {
       ctxt.drawImage(image,0,0);
 
       clock.draw(ctxt);
-      /*
-      // Draw the "clock_speed_button"
-      ctxt.fillStyle = "#ffffff44";
-      if (clock_speed_button[0][0]>=1000) {
-        ctxt.fillStyle = "#0000ff44";
-      } else if (clock_speed_button[0][0]>=200) {
-        ctxt.fillStyle = "#00ff0044";
-      } else {
-        ctxt.fillStyle = "#ff000044";
-      }
-      ctxt.fillRect( clock_speed_button[0][1]-20, clock_speed_button[0][2]-20, 20,20);
-
-      // Draw the Run/Stop or "clock_auto_button" button
-      ctxt.fillStyle = "#ffffff88";
-      if (clock_auto_button[0][0]) {
-        ctxt.fillStyle = "#ff888888";
-      }
-      ctxt.fillRect( clock_auto_button[0][1]-10, clock_auto_button[0][2]-10, 20,20);
-
-      // Draw the Single Step or "clock_step_button" button
-      ctxt.fillStyle = "#ffffff88";
-      ctxt.fillRect( clock_step_button[0][1]-10, clock_step_button[0][2]-10, 20,20);
-
-      // Draw the Clock light
-      for (let i=0; i<clock_LEDs.length; i++) {
-        if (clock_LEDs[i][0]) {
-          ctxt.fillStyle = blue_on;
-        } else {
-          ctxt.fillStyle = blue_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(clock_LEDs[i][1], clock_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
-      */
 
       // Draw the x1 light
       for (let i=0; i<x1_LEDs.length; i++) {
@@ -629,55 +591,10 @@ function draw_canvas() {
 
 function mouse_up ( event ) {
   clock.mouse_up ( event );
-  /*
-  if ( (event.clientX >= clock_step_button[0][1]) && (event.clientX <= clock_step_button[0][1]+20) ) {
-    if ( (event.clientY >= clock_step_button[0][2]) && (event.clientY <= clock_step_button[0][2]+20) ) {
-      if (consoleDebug) console.log ( "Clock up with " + event.clientX + ", " + event.clientY );
-      step();
-      update_canvas();
-    }
-  }
-  */
 }
 
 function mouse_down ( event ) {
   clock.mouse_down ( event );
-  /*
-  if ( (event.clientX >= clock_step_button[0][1]) && (event.clientX <= clock_step_button[0][1]+20) ) {
-    if ( (event.clientY >= clock_step_button[0][2]) && (event.clientY <= clock_step_button[0][2]+20) ) {
-      if (consoleDebug) console.log ( "Clock down with " + event.clientX + ", " + event.clientY );
-      step();
-      update_canvas();
-    }
-  }
-  if ( (event.clientX >= clock_auto_button[0][1]) && (event.clientX <= clock_auto_button[0][1]+20) ) {
-    if ( (event.clientY >= clock_auto_button[0][2]) && (event.clientY <= clock_auto_button[0][2]+20) ) {
-      run_stop();
-      clock_auto_button[0][0] = !clock_auto_button[0][0];
-      if (consoleDebug) console.log ( "auto toggled to " + clock_auto_button[0][0] );
-      update_canvas();
-    }
-  }
-  if ( (event.clientX >= clock_speed_button[0][1]-10) && (event.clientX <= clock_speed_button[0][1]+10) ) {
-    if ( (event.clientY >= clock_speed_button[0][2]-10) && (event.clientY <= clock_speed_button[0][2]+10) ) {
-      if (consoleDebug) console.log ( "toggle speed button pressed" );
-      for (let i=0; i<clock_speeds.length; i++) {
-        if (consoleDebug) console.log ( "Checking speed " + i + ": " + clock_speeds[i] );
-        if (clock_speed_button[0][0] == clock_speeds[i]) {
-          if (consoleDebug) console.log ( "toggle speed" );
-          if (i < (clock_speeds.length-1)) {
-            clock_speed_button[0][0] = clock_speeds[i+1];
-          } else {
-            clock_speed_button[0][0] = clock_speeds[0];
-          }
-          if (consoleDebug) console.log ( "toggled speed to " + clock_speed_button[0][0] );
-          break;
-        }
-      }
-      update_canvas();
-    }
-  }
-  */
 }
 
 stopRunning = false;
@@ -708,7 +625,6 @@ function mainLoop()
    mainLoop.bInMainLoop = false;
 
    if (mainLoop.bStayInLoop)
-      // setTimeout ("mainLoop()", clock_speed_button[0][0]); // Call mainLoop 1ms from now
       setTimeout ("mainLoop()", clock.get_speed_ms()); // Call mainLoop 1ms from now
 
    if (consoleDebug) console.log("sim: exit mainLoop");
@@ -773,10 +689,9 @@ function exec_next() {
 
   // Toggle the clock
   clock.half_tick();
-  clock_LEDs[0][0] = !clock_LEDs[0][0];
 
   // Update the ucode counter on the appropriate clock edge
-  if (!clock_LEDs[0][0]) {
+  if (!clock.get_state()) {
     ucode_ctr_LEDs[0][0] = !ucode_ctr_LEDs[0][0];
     if (!ucode_ctr_LEDs[0][0]) {
       ucode_ctr_LEDs[1][0] = !ucode_ctr_LEDs[1][0];
@@ -812,7 +727,8 @@ function exec_next() {
   ucode_state_LEDs[ucv][0] = false;
 
   console.log ( "ucv before pc = " + ucv );
-  if ( (clock_LEDs[0][0]) && (ucv == 3) ) {
+
+  if ( clock.get_state() && (ucv == 3) ) {
     // Execute the current instruction
     let pc = 0;
     if (program_ctr_LEDs[0][0]) {
