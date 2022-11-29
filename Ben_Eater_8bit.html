@@ -28,6 +28,8 @@ HLT = 1111 XXXX  // Could use XXXX for other instructions, push, pop, chs, etc.
 
 var consoleDebug = false;
 
+var gray_on = "#cccccc";
+var gray_off = "#444444";
 var red_on = "#ffcc88";
 var red_off = "#bb2222";
 var yellow_on = "#ffff00";
@@ -38,19 +40,77 @@ var green_on = "#daff0c";
 var green_off = "#185621";
 
 
-class ClockModule {
+class Register {
+  constructor ( name ) {
+    console.log ( "New Register " + name );
+    this.reg_name = name;
+    this.on_color = gray_on;
+    this.off_color = gray_off;
+    this.radius = 10;
+    this.state = [ true ];
+    this.position = [ [20,90] ];
+  }
+  get_state() {
+    return ( this.state );
+  }
+  set_value ( value ) {
+    this.state = [];
+    let n = this.position.length;
+    let bit = 0;
+    for (let i=0; i<n; i++) {
+      // if ((value >> bit) & 0x01) > 0) {
+      if ((value & (0x01 << bit)) > 0) {
+        this.state.push ( true );
+      } else {
+        this.state.push ( false );
+      }
+      bit = bit + 1;
+    }
+  }
+  randomize_bits () {
+    for (let i=0; i<this.state.length; i++) {
+      if (Math.random() > 0.5) {
+        this.state[i] = true;
+      } else {
+        this.state[i] = false;
+      }
+    }
+  }
+  draw ( ctxt ) {
+    console.log ( "Draw Register " + this.reg_name );
+    // Draw the Register lights
+    for (let i=0; i<this.position.length; i++) {
+      let s = false;
+      if (i < this.state.length) {
+        s = this.state[i];
+      }
+      if (s) {
+        ctxt.fillStyle = this.on_color;
+      } else {
+        ctxt.fillStyle = this.off_color;
+      }
+      ctxt.beginPath();
+      ctxt.arc(this.position[i][0], this.position[i][1], this.radius, 0, 2 * Math.PI);
+      ctxt.fill();
+      ctxt.closePath();
+    }
+    console.log ( "  finished Draw Register " + this.reg_name );
+  }
+}
 
-  constructor () {
+class ClockModule extends Register {
+
+  constructor (name) {
+    super(name);
     this.state = false;
     this.clock_speed_button = [ [200,25,16] ];
     this.clock_auto_button = [ [false,121,29] ];
     this.clock_step_button = [ [true,69,32] ];
     this.clock_speeds = [ 1000, 200, 10 ];
+    this.on_color = blue_on;
+    this.off_color = blue_off;
     this.position = [ 232, 6 ];
-  }
-
-  get_state() {
-    return ( this.state );
+    this.radius = 5;
   }
 
   half_tick() {
@@ -131,6 +191,11 @@ class ClockModule {
     ctxt.fillStyle = "#ffffff88";
     ctxt.fillRect( this.clock_step_button[0][1]-10, this.clock_step_button[0][2]-10, 20,20);
 
+    // Draw the LED
+    //console.log ( "ClockModule calling super.draw" );
+    //super.draw(ctxt);
+    //console.log ( "ClockModule done calling super.draw" );
+
     // Draw the Clock light
     if (this.state) {
       ctxt.fillStyle = blue_on;
@@ -144,10 +209,11 @@ class ClockModule {
   }
 }
 
-class uCodeCounter {
+class uCodeCounter extends Register {
 
   constructor () {
-    this.ucode_state = 0;
+    super("uCodeCounter");
+    this.state = 0;
     this.ucode_ctr_LEDs = [ [false,33,395],[false,43,395],[false,53,395] ];
 
     this.ucode_state_LEDs = [ [false,66,390],
@@ -158,10 +224,6 @@ class uCodeCounter {
                               [false,120,390] ];
     //                        [false,124,390],
     //                        [false,128,390] ];
-  }
-
-  get_state() {
-    return ( this.state );
   }
 
   update ( clock_state ) {
@@ -242,6 +304,35 @@ class uCodeCounter {
 }
 
 
+class ARegister extends Register {
+  constructor () {
+    super("ARegister");
+    this.on_color = red_on;
+    this.off_color = red_off;
+    this.radius = 5;
+    this.state = [ true, false, true, false, false, false, true, true ];
+    this.position = [ [422,134],[432,134],[443,134],[453,134],[464,134],[474,134],[485,134],[495,134] ];
+  }
+  draw(ctxt) {
+    super.draw(ctxt);
+  }
+}
+
+
+class BRegister extends Register {
+  constructor () {
+    super("BRegister");
+    this.on_color = red_on;
+    this.off_color = red_off;
+    this.radius = 5;
+    this.state = [false,true,false,true,false,true,false,true];
+    this.position = [ [424,290],[434,290],[445,290],[455,290],[466,290],[477,290],[488,290],[498,290] ];
+  }
+  draw(ctxt) {
+    super.draw(ctxt);
+  }
+}
+
 
 
 function decode ( instruction ) {
@@ -285,8 +376,12 @@ var memory = [
   0x05   // 0F: (y)
 ];
 
-clock = new ClockModule();
+test_reg = new Register("Test");
+
+clock = new ClockModule("Clock");
 ucode_ctr = new uCodeCounter();
+a_reg = new ARegister();
+b_reg = new BRegister();
 
 var x1_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var x2_LEDs = [ [true,55,111] ];  // Red near Address Register DIP Switch
@@ -309,24 +404,6 @@ var mem_address_LEDs = [ [false,147,145],
                          [true,157,146],
                          [false,166,145],
                          [true,176,146] ];
-
-var register_A_LEDs = [ [false,422,134],
-                        [true,432,134],
-                        [false,443,134],
-                        [true,453,134],
-                        [false,464,134],
-                        [true,474,134],
-                        [false,485,134],
-                        [true,495,134] ];
-
-var register_B_LEDs = [ [false,424,290],
-                        [true,434,290],
-                        [false,445,290],
-                        [true,455,290],
-                        [false,466,290],
-                        [true,477,290],
-                        [false,488,290],
-                        [true,498,290] ];
 
 var sum_register_LEDs = [ [false,368,220],
                           [true,377,221],
@@ -395,7 +472,7 @@ function randomize_all_bits () {
   randomize_register_bits ( zero_flag_LEDs );
   randomize_register_bits ( carry_flag_LEDs );
   randomize_register_bits ( sum_register_LEDs );
-  randomize_register_bits ( register_B_LEDs );
+  // randomize_register_bits ( register_B_LEDs );
   // randomize_register_bits ( register_A_LEDs );
   randomize_register_bits ( mem_address_LEDs );
   randomize_register_bits ( bus_value_LEDs );
@@ -420,8 +497,10 @@ function update_canvas() {
       ctxt.drawImage(image,0,0);
 
       // Draw the modules
+      console.log ( "About to draw clock" );
       clock.draw(ctxt);
       ucode_ctr.draw(ctxt);
+      test_reg.draw(ctxt);
 
       // Draw the x1 light
       for (let i=0; i<x1_LEDs.length; i++) {
@@ -487,31 +566,10 @@ function update_canvas() {
         ctxt.closePath();
       }
 
-      // Draw the A Register lights
-      for (let i=0; i<register_A_LEDs.length; i++) {
-        if (register_A_LEDs[i][0]) {
-          ctxt.fillStyle = red_on;
-        } else {
-          ctxt.fillStyle = red_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(register_A_LEDs[i][1], register_A_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
+      a_reg.draw ( ctxt );
+      b_reg.randomize_bits();
+      b_reg.draw ( ctxt );
 
-      // Draw the B Register lights
-      for (let i=0; i<register_B_LEDs.length; i++) {
-        if (register_B_LEDs[i][0]) {
-          ctxt.fillStyle = red_on;
-        } else {
-          ctxt.fillStyle = red_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(register_B_LEDs[i][1], register_B_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
 
       // Draw the Sum Register lights
       for (let i=0; i<sum_register_LEDs.length; i++) {
@@ -729,18 +787,6 @@ function step() {
 	}
 }
 
-function put ( value, register ) {
-  let n = register.length;
-  bit = 0;
-  for (let i=0; i<n; i++) {
-    if ((value & (0x01 << bit)) > 0) {
-      register[n-(i+1)][0] = true;
-    } else {
-      register[n-(i+1)][0] = false;
-    }
-    bit = bit + 1;
-  }
-}
 
 var count = 0;
 function exec_next() {
@@ -775,7 +821,7 @@ function exec_next() {
     if (upper == 0x00)        { // "NOP " + lower );
     } else if (upper == 0x01) { // "LDA " + lower );
       let value = memory[lower];
-      put ( value, register_A_LEDs );
+      a_reg.set_value ( value );
     } else if (upper == 0x02) { // "ADD " + lower );
     } else if (upper == 0x03) { // "SUB " + lower );
       // let value = get ( register_
