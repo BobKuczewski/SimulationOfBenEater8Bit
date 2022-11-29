@@ -7,6 +7,65 @@
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
 <script>
+/*
+NOP = 0000 XXXX
+LDA = 0001 addr
+ADD = 0010 addr
+SUB = 0011 addr
+STA = 0100 addr
+LDI = 0101 value
+JMP = 0110 addr
+JC  = 0111 addr
+JZ  = 1000 addr
+    = 1001
+    = 1010
+    = 1011
+    = 1100
+    = 1101
+OUT = 1110 XXXX  // Could use XXXX for In/Out and multiple channels
+HLT = 1111 XXXX  // Could use XXXX for other instructions, push, pop, chs, etc.
+*/
+function decode ( instruction ) {
+  let out = "";
+  let lower = instruction & 0x0f;
+  let upper = (instruction >> 4) & 0x0f;
+  if (upper == 0x00) out = ( "NOP " + lower );
+  if (upper == 0x01) out = ( "LDA " + lower );
+  if (upper == 0x02) out = ( "ADD " + lower );
+  if (upper == 0x03) out = ( "SUB " + lower );
+  if (upper == 0x04) out = ( "STA " + lower );
+  if (upper == 0x05) out = ( "LDI " + lower );
+  if (upper == 0x06) out = ( "JMP " + lower );
+  if (upper == 0x07) out = ( "JC  " + lower );
+  if (upper == 0x08) out = ( "JZ  " + lower );
+  if (upper == 0x09) out = ( "?09 " + lower );
+  if (upper == 0x0a) out = ( "?0A " + lower );
+  if (upper == 0x0b) out = ( "?0B " + lower );
+  if (upper == 0x0c) out = ( "?0C " + lower );
+  if (upper == 0x0d) out = ( "?0D " + lower );
+  if (upper == 0x0e) out = ( "OUT " + lower );
+  if (upper == 0x0f) out = ( "HLT " + lower );
+  return ( out );
+}
+var memory = [
+  0x1e,  // 00: LDA 14
+  0x3c,  // 01: SUB 12
+  0x76,  // 02: JC 6
+  0x1d,  // 03: LDA 13
+  0xe0,  // 04: OUT
+  0xf0,  // 05: HLT
+  0x4e,  // 06: STA 14
+  0x1d,  // 07: LDA 13
+  0x2f,  // 08: ADD 15
+  0x4d,  // 09: STA 13
+  0x60,  // 0A: JMP 0
+  0x00,  // 0B:
+  0x01,  // 0C: 1
+  0x00,  // 0D: (product of x*y)
+  0x07,  // 0E: (x)
+  0x05   // 0F: (y)
+];
+
 var consoleDebug = false;
 
 var red_on = "#ffcc88";
@@ -29,9 +88,9 @@ var x1_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var x2_LEDs = [ [true,55,111] ];  // Red near Address Register DIP Switch
 
 var program_ctr_LEDs = [ [false,386,6],
-                         [true,395,6],
+                         [false,395,6],
                          [false,404,6],
-                         [true,413,6] ];
+                         [false,413,6] ];
 
 var ucode_ctr_LEDs = [ [false,33,395],
                        [false,43,395],
@@ -147,12 +206,12 @@ function randomize_all_bits () {
   randomize_register_bits ( carry_flag_LEDs );
   randomize_register_bits ( sum_register_LEDs );
   randomize_register_bits ( register_B_LEDs );
-  randomize_register_bits ( register_A_LEDs );
+  // randomize_register_bits ( register_A_LEDs );
   randomize_register_bits ( mem_address_LEDs );
   randomize_register_bits ( bus_value_LEDs );
   // randomize_register_bits ( ucode_state_LEDs );
   // randomize_register_bits ( ucode_ctr_LEDs );
-  randomize_register_bits ( program_ctr_LEDs );
+  // randomize_register_bits ( program_ctr_LEDs );
 }
 
 
@@ -571,30 +630,28 @@ function stop() {
 	mainLoop.bStayInLoop = false;
 	stopRunning = true;
 }
-
 function step() {
 	if (running == false) {
 		exec_next();
-/*
-		if (update_while_running) {
-			show_reg();
-			//show_Q_LED();
-			show_mem();
-			show_instr();
-			show_out();
-			//show_out_LED();
-			// get_in();
-		}
-		if (show_led_output) {
-			show_Q_LED();
-			show_out_LED();
-		}
-*/
 	}
+}
+
+function put ( value, register ) {
+  let n = register.length;
+  bit = 0;
+  for (let i=0; i<n; i++) {
+    if ((value & (0x01 << bit)) > 0) {
+      register[n-(i+1)][0] = true;
+    } else {
+      register[n-(i+1)][0] = false;
+    }
+    bit = bit + 1;
+  }
 }
 
 var count = 0;
 function exec_next() {
+
   // Toggle the clock
   clock_LEDs[0][0] = !clock_LEDs[0][0];
 
@@ -608,6 +665,7 @@ function exec_next() {
       }
     }
   }
+
   // Update the ucode state based on the counter
   let ucv = 0;
   if (ucode_ctr_LEDs[2][0]) {
@@ -625,7 +683,6 @@ function exec_next() {
     ucode_ctr_LEDs[1][0] = false;
     ucode_ctr_LEDs[2][0] = false;
   }
-  console.log ( "ucv = " + ucv );
   ucode_state_LEDs[0][0] = true;
   ucode_state_LEDs[1][0] = true;
   ucode_state_LEDs[2][0] = true;
@@ -634,8 +691,62 @@ function exec_next() {
   ucode_state_LEDs[5][0] = true;
   ucode_state_LEDs[ucv][0] = false;
 
+  console.log ( "ucv before pc = " + ucv );
+  if ( (clock_LEDs[0][0]) && (ucv == 3) ) {
+    // Execute the current instruction
+    let pc = 0;
+    if (program_ctr_LEDs[0][0]) {
+      pc = pc | 0x08;
+    }
+    if (program_ctr_LEDs[1][0]) {
+      pc = pc | 0x04;
+    }
+    if (program_ctr_LEDs[2][0]) {
+      pc = pc | 0x02;
+    }
+    if (program_ctr_LEDs[3][0]) {
+      pc = pc | 0x01;
+    }
+    console.log ( "Execute " + memory[pc] + " = " + decode(memory[pc]) );
+
+    let lower = memory[pc] & 0x0f;
+    let upper = (memory[pc] >> 4) & 0x0f;
+
+    if (upper == 0x00)        { // "NOP " + lower );
+    } else if (upper == 0x01) { // "LDA " + lower );
+      let value = memory[lower];
+      put ( value, register_A_LEDs );
+    } else if (upper == 0x02) { // "ADD " + lower );
+    } else if (upper == 0x03) { // "SUB " + lower );
+      // let value = get ( register_
+
+    } else if (upper == 0x04) { // "STA " + lower );
+    } else if (upper == 0x05) { // "LDI " + lower );
+    } else if (upper == 0x06) { // "JMP " + lower );
+    } else if (upper == 0x07) { // "JC  " + lower );
+    } else if (upper == 0x08) { // "JZ  " + lower );
+    } else if (upper == 0x09) { // "?09 " + lower );
+    } else if (upper == 0x0a) { // "?0A " + lower );
+    } else if (upper == 0x0b) { // "?0B " + lower );
+    } else if (upper == 0x0c) { // "?0C " + lower );
+    } else if (upper == 0x0d) { // "?0D " + lower );
+    } else if (upper == 0x0e) { // "OUT " + lower );
+    } else if (upper == 0x0f) { // "HLT " + lower );
+    }
+
+    // Increment the program counter as needed
+    pc = pc + 1;
+    console.log ( "PC = " + pc );
+    program_ctr_LEDs[0][0] = ( (pc & 0x08) != 0 );
+    program_ctr_LEDs[1][0] = ( (pc & 0x04) != 0 );
+    program_ctr_LEDs[2][0] = ( (pc & 0x02) != 0 );
+    program_ctr_LEDs[3][0] = ( (pc & 0x01) != 0 );
+  }
+
+  // Set all others to random values (used during development)
   randomize_all_bits();
   update_canvas();
+
 	if (consoleDebug) console.log ( "Executed " + count );
 	count = count + 1;
 }
