@@ -27,24 +27,44 @@ OUT = 1110 XXXX  // Could use XXXX for In/Out and multiple channels
 HLT = 1111 XXXX  // Could use XXXX for other instructions, push, pop, chs, etc.
 */
 
-var memory = [
-/* 0 */ 0x1e,  // LDA E (ff)
-/* 1 */ 0x55,  // LDI 5
-/* 2 */ 0x2f,  // ADD F 5
-/* 3 */ 0x3d,  // SUB F 1
-/* 4 */ 0xf0,  // HLT
-/* 5 */ 0x60,  // JMP 0
-/* 6 */ 0x00,
-/* 7 */ 0x00,
-/* 8 */ 0x00,
-/* 9 */ 0x00,
-/* a */ 0x00,
-/* b */ 0x00,
-/* c */ 0x00,
-/* d */ 0x01,
-/* e */ 0xff,
-/* f */ 0x05,
+var memory = [ // Fibonacci Numbers up to 144
+/* 0 */ 0x51,  // ldi 1   ; 1
+/* 1 */ 0x4e,  // sta e   ; y(e) = 1
+/* 2 */ 0x50,  // ldi 0   ; x = 0
+/* 3 */ 0xe0,  // out
+/* 4 */ 0x2e,  // add [e] ; x + y
+/* 5 */ 0x4f,  // sta [f] ; z = x + y
+/* 6 */ 0x1e,  // lda [e] ; y
+/* 7 */ 0x4d,  // sta [d] ; x = y
+/* 8 */ 0x1f,  // lda [f] ; z
+/* 9 */ 0x4e,  // sta [e] ; y = z
+/* a */ 0x1d,  // lda [d] ; x
+/* b */ 0x70,  // jc  0   ; jump carry to next Fib
+/* c */ 0x63,  // jmp 3   ; keep adding
+/* d */ 0x00,  // x
+/* e */ 0x00,  // y
+/* f */ 0x00,  // z
 ];
+
+
+//var memory = [
+//* 0 */ 0x1e,  // LDA E (ff)
+//* 1 */ 0x55,  // LDI 5
+//* 2 */ 0x2f,  // ADD F 5
+//* 3 */ 0x3d,  // SUB F 1
+//* 4 */ 0xf0,  // HLT
+//* 5 */ 0x60,  // JMP 0
+//* 6 */ 0x00,
+//* 7 */ 0x00,
+//* 8 */ 0x00,
+//* 9 */ 0x00,
+//* a */ 0x00,
+//* b */ 0x00,
+//* c */ 0x00,
+//* d */ 0x01,
+//* e */ 0xff,
+//* f */ 0x05,
+//];
 
 /* Program to shift A along (works)
   0x18,
