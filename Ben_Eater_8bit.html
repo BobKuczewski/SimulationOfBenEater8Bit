@@ -8,6 +8,16 @@
 
 <script>
 
+// Reset
+/*
+Program Counter
+A & B
+Output Register
+Instruction Register
+Memory Address Register
+*/
+
+
 /* Instruction set:
 NOP = 0000 XXXX
 LDA = 0001 addr
@@ -165,7 +175,26 @@ function display_status() {
 */
 function change_example() {
   if (document.getElementById("examples").value == "Examples") {
-    memory = [ // Zero
+    memory = [ // Halt
+    /* 0 */ 0xff,
+    /* 1 */ 0xff,
+    /* 2 */ 0xff,
+    /* 3 */ 0xff,
+    /* 4 */ 0xff,
+    /* 5 */ 0xff,
+    /* 6 */ 0xff,
+    /* 7 */ 0xff,
+    /* 8 */ 0xff,
+    /* 9 */ 0xff,
+    /* a */ 0xff,
+    /* b */ 0xff,
+    /* c */ 0xff,
+    /* d */ 0xff,
+    /* e */ 0xff,
+    /* f */ 0xff,
+    ];
+  } else if (document.getElementById("examples").value == "No Ops") {
+    memory = [ // No Ops
     /* 0 */ 0,
     /* 1 */ 0,
     /* 2 */ 0,
@@ -618,6 +647,31 @@ class InstructionData extends Register {
 }
 
 
+class MemoryAddress extends Register {
+  constructor (name,nbits) {
+    super("Memory Address",nbits);
+    this.on_color = yellow_on;
+    this.off_color = yellow_off;
+    this.radius = 5;
+    // Note that index 0 corresponds to bit 0 (LSB)
+    this.state = [false,false,false,false];
+    this.position = [ [147,145], [157,146], [166,145], [176,146] ];
+  }
+}
+
+class MemoryData extends Register {
+  constructor (name,nbits) {
+    super("Memory Address",nbits);
+    this.on_color = yellow_on;
+    this.off_color = yellow_off;
+    this.radius = 5;
+    // Note that index 0 corresponds to bit 0 (LSB)
+    this.state = [false,false,false,false,false,false,false,false];
+    this.position = [ [138,225], [147,225], [156,225], [166,225], [176,225], [187,225], [198,225], [208,225] ];
+  }
+}
+
+
 class SevenSegmentDisplay extends Register {
   constructor (name,nbits) {
     super("Instruction Operation",nbits);
@@ -701,6 +755,8 @@ function decode ( instruction ) {
 clock = new ClockModule("Clock", 1);
 ucode_ctr = new uCodeCounter("uCodeCounter", 3 );
 prog_ctr = new ProgramCounter("ProgramCounter", 4);
+mem_addr = new MemoryAddress("MemoryAddress", 4);
+mem_data = new MemoryData("MemoryData", 8);
 inst_op = new InstructionOperation("InstructionOp", 4);
 inst_data = new InstructionData("InstructionData", 4);
 a_reg = new ARegister("RegisterA", 8);
@@ -721,20 +777,6 @@ var bus_value_LEDs = [ [false,289,6],
                        [true,334,6],
                        [false,343,6],
                        [true,352,6] ];
-
-var mem_address_LEDs = [ [false,147,145],
-                         [true,157,146],
-                         [false,166,145],
-                         [true,176,146] ];
-
-var mem_contents_LEDs = [ [true,138,225],
-                          [false,147,225],
-                          [true,156,225],
-                          [true,166,225],
-                          [false,176,225],
-                          [true,187,225],
-                          [false,198,225],
-                          [true,208,225] ];
 
 var control_word_LEDs = [ [true,366,497],
                           [false,376,497],
@@ -765,7 +807,7 @@ function randomize_register_bits ( reg ) {
 
 function randomize_all_bits () {
   randomize_register_bits ( control_word_LEDs );
-  randomize_register_bits ( mem_contents_LEDs );
+  // randomize_register_bits ( mem_contents_LEDs );
   // randomize_register_bits ( instr_low_LEDs );
   // randomize_register_bits ( instr_high_LEDs );
   // randomize_register_bits ( zero_flag_LEDs );
@@ -773,7 +815,7 @@ function randomize_all_bits () {
   // randomize_register_bits ( sum_register_LEDs );
   // randomize_register_bits ( register_B_LEDs );
   // randomize_register_bits ( register_A_LEDs );
-  randomize_register_bits ( mem_address_LEDs );
+  // randomize_register_bits ( mem_address_LEDs );
   randomize_register_bits ( bus_value_LEDs );
   // randomize_register_bits ( ucode_state_LEDs );
   // randomize_register_bits ( ucode_ctr_LEDs );
@@ -842,18 +884,8 @@ function update_canvas() {
         ctxt.closePath();
       }
 
-      // Draw the Memory Address lights
-      for (let i=0; i<mem_address_LEDs.length; i++) {
-        if (mem_address_LEDs[i][0]) {
-          ctxt.fillStyle = yellow_on;
-        } else {
-          ctxt.fillStyle = yellow_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(mem_address_LEDs[i][1], mem_address_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
+      mem_addr.draw ( ctxt );
+      mem_data.draw ( ctxt );
 
       a_reg.draw ( ctxt );
 
@@ -866,19 +898,6 @@ function update_canvas() {
 
       inst_op.draw ( ctxt );
       inst_data.draw ( ctxt );
-
-      // Draw the Memory Contents lights
-      for (let i=0; i<mem_contents_LEDs.length; i++) {
-        if (mem_contents_LEDs[i][0]) {
-          ctxt.fillStyle = red_on;
-        } else {
-          ctxt.fillStyle = red_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(mem_contents_LEDs[i][1], mem_contents_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
 
       // Draw the Control Word lights
       for (let i=0; i<control_word_LEDs.length; i++) {
@@ -1014,6 +1033,8 @@ function exec_next() {
     let pc = prog_ctr.get_value();
     if (consoleDebug) console.log ( "Execute " + hex2(memory[pc]) + " = " + decode(memory[pc]) );
 
+    mem_addr.set_value ( pc );
+    mem_data.set_value ( memory[pc] );
     let lower = memory[pc] & 0x0f;
     let upper = (memory[pc] >> 4) & 0x0f;
 
@@ -1022,11 +1043,15 @@ function exec_next() {
 
     if (upper == 0x00)        { // "NOP " + lower );
     } else if (upper == 0x01) { // "LDA " + lower );
+      mem_addr.set_value ( lower );
+      mem_data.set_value ( memory[lower] );
       if (consoleDebug) console.log ( "  A = memory[" + lower + "] = " + memory[lower] );
       let value = memory[lower];
       a_reg.set_value ( value );
       sum_reg.set_value ( (a_reg.get_value() + b_reg.get_value()) );
     } else if (upper == 0x02) { // "ADD " + lower );
+      mem_addr.set_value ( lower );
+      mem_data.set_value ( memory[lower] );
       if (consoleDebug) console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
       let value = memory[lower];
       b_reg.set_value ( value );
@@ -1040,12 +1065,16 @@ function exec_next() {
       sum_reg.set_value ( result );
       a_reg.set_value ( result );
     } else if (upper == 0x03) { // "SUB " + lower );
+      mem_addr.set_value ( lower );
+      mem_data.set_value ( memory[lower] );
       if (consoleDebug) console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
       let value = memory[lower];
       b_reg.set_value ( value );
       sum_reg.set_value ( a_reg.get_value() - b_reg.get_value() );
       a_reg.set_value ( sum_reg.get_value() );
     } else if (upper == 0x04) { // "STA " + lower );
+      mem_addr.set_value ( lower );
+      mem_data.set_value ( memory[lower] );
       memory[lower] = a_reg.get_value();
       sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
     } else if (upper == 0x05) { // "LDI " + lower );
@@ -1053,11 +1082,15 @@ function exec_next() {
       a_reg.set_value ( lower );
       sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
     } else if (upper == 0x06) { // "JMP " + lower );
+      mem_addr.set_value ( lower );
       if (consoleDebug) console.log ( "  JMP " + lower );
       let value = memory[lower];
+      mem_data.set_value ( memory[lower] );
       pc = lower - 1; // Jump before destination since pc will be incremented
     } else if (upper == 0x07) { // "JC  " + lower );
       if (carry_bit.get_value() != 0) {
+        mem_addr.set_value ( lower );
+        mem_data.set_value ( memory[lower] );
         let value = memory[lower];
         pc = lower - 1; // Jump before destination since pc will be incremented
       }
@@ -1108,7 +1141,6 @@ setup_canvas();
 </head>
 
 <body id='page' onload="setup_canvas()" onresize="update_canvas()" bgcolor="lightblue">
-<!--body id='page' bgcolor="lightblue"-->
 
 <table>
 <tr><td>
@@ -1118,6 +1150,7 @@ setup_canvas();
 
 <select id="examples" onchange="change_example()">
 <option value="Examples">Examples</option>
+<option value="No Ops">No Ops</option>
 <option value="Counter">Counter</option>
 <option value="Fibonacci">Fibonacci</option>
 </select>
