@@ -1442,9 +1442,11 @@ Source Code<br/>
 
 
 <hr/>
-Instruction Set:
+<center>
+Instruction Set (a=address, v=value, x=don't care)
+<hr/>
 <table>
-<tr><td>Name</td><td>Hex</td><td>Binary</td><td>Description</td></tr>
+<tr><td><b>Name</b></td><td><b>Hex</b></td><td><b>Binary</b></td><td><b>Description</b></td></tr>
 <tr><td>NOP</td><td>0x</td><td>0000 xxxx</td><td>No operation (does nothing)</td></tr>
 <tr><td>LDA</td><td>1a</td><td>0001 addr</td><td>Load from memory (addr) into A Register</td></tr>
 <tr><td>ADD</td><td>2a</td><td>0010 addr</td><td>Add from memory (addr) into A Register</td></tr>
@@ -1462,7 +1464,8 @@ Instruction Set:
 <tr><td>OUT</td><td>Ex</td><td>1110 xxxx</td><td>Output to LED panel (could use XXXX for In/Out channels)</td></tr>
 <tr><td>HLT</td><td>Fx</td><td>1111 xxxx</td><td>Halt (could use XXXX for other instructions, push, pop, chs, etc.)</td></tr>
 </table>
-
+</center>
+<!--
 <hr/>
 Examples:
 <pre>
@@ -1544,5 +1547,7 @@ HLT = 1111 XXXX  // Could use XXXX for other instructions, push, pop, chs, etc.
 */
 
 </pre>
-
+-->
 </body>
+</html>
+
