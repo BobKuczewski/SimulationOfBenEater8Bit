@@ -179,7 +179,6 @@ var green_on = "#daff0c";
 var green_off = "#185621";
 
 function toggle_debug() {
-  // consoleDebug = !consoleDebug;
   let debug = document.getElementById('debug');
   consoleDebug = debug.checked;
 }
@@ -255,7 +254,6 @@ class Register {
       ctxt.fill();
       ctxt.closePath();
     }
-    // console.log ( "  finished Draw Register " + this.reg_name );
   }
   toString() {
     let s = "Register " + this.reg_name + " = " + this.get_value();
@@ -356,12 +354,7 @@ class ClockModule extends Register {
     ctxt.fillStyle = "#ffffff88";
     ctxt.fillRect( this.clock_step_button[0][1]-10, this.clock_step_button[0][2]-10, 20,20);
 
-    // Draw the LED
-    //console.log ( "ClockModule calling super.draw" );
-    //super.draw(ctxt);
-    //console.log ( "ClockModule done calling super.draw" );
-
-    // Draw the Clock light
+    // Draw the Clock LED
     if (this.state) {
       ctxt.fillStyle = blue_on;
     } else {
@@ -478,9 +471,6 @@ class ARegister extends Register {
     this.state = [ true, false, true, false, false, false, true, true ];
     this.position = [ [422,134],[432,134],[443,134],[453,134],[464,134],[474,134],[485,134],[495,134] ];
   }
-  draw(ctxt) {
-    super.draw(ctxt);
-  }
 }
 
 
@@ -492,9 +482,6 @@ class BRegister extends Register {
     this.radius = 5;
     this.state = [false,true,false,true,false,true,false,true];
     this.position = [ [424,290],[434,290],[445,290],[455,290],[466,290],[477,290],[488,290],[498,290] ];
-  }
-  draw(ctxt) {
-    super.draw(ctxt);
   }
 }
 
@@ -508,9 +495,6 @@ class SumRegister extends Register {
     this.state = [false,true,false,true,false,true,false,true];
     this.position = [ [368,220],[377,221],[389,221],[400,222],[409,222],[419,222],[429,222],[441,220] ];
   }
-  draw(ctxt) {
-    super.draw(ctxt);
-  }
 }
 
 class CarryRegister extends Register {
@@ -521,9 +505,6 @@ class CarryRegister extends Register {
     this.radius = 5;
     this.state = [false];
     this.position = [ [562,133] ];
-  }
-  draw(ctxt) {
-    super.draw(ctxt);
   }
 }
 
@@ -536,10 +517,6 @@ class ZeroRegister extends Register {
     this.state = [false];
     this.position = [ [572,133] ];
   }
-  /*
-  draw(ctxt) {
-    super.draw(ctxt);
-  } */
 }
 
 
@@ -552,9 +529,6 @@ class ProgramCounter extends Register {
     // Note that index 0 corresponds to bit 0 (LSB)
     this.state = [false,false,false,false];
     this.position = [ [386,6], [395,6], [404,6], [413,6] ];
-  }
-  draw(ctxt) {
-    super.draw(ctxt);
   }
 }
 
@@ -569,9 +543,6 @@ class InstructionOperation extends Register {
     this.state = [true,false,false,false];
     this.position = [ [148,369], [157,370], [166,371], [177,371] ];
   }
-  draw(ctxt) {
-    super.draw(ctxt);
-  }
 }
 class InstructionData extends Register {
   constructor (name,nbits) {
@@ -583,10 +554,8 @@ class InstructionData extends Register {
     this.state = [false,false,false,true];
     this.position = [ [187,371], [197,371], [207,371], [217,371] ];
   }
-  draw(ctxt) {
-    super.draw(ctxt);
-  }
 }
+
 
 class SevenSegmentDisplay extends Register {
   constructor (name,nbits) {
@@ -612,17 +581,17 @@ class SevenSegmentDisplay extends Register {
       /* 9 */ [0,1,2,3,5,6],
     ];
   }
+
   set_digits ( digits ) {
     this.digits = digits;
   }
+
   draw_digit ( ctxt, d, offset ) {
     let segs = this.digit_segments[d];
-    // console.log ( segs );
     ctxt.strokeStyle = "#fd4a57";
     ctxt.lineWidth = 3;
     for (let i=0; i<segs.length; i++) {
       let seg = this.segments[segs[i]]
-      // console.log ( seg );
       let start = this.position[seg[0]];
       let end   = this.position[seg[1]];
       ctxt.beginPath();
@@ -631,29 +600,14 @@ class SevenSegmentDisplay extends Register {
       ctxt.stroke();
     }
   }
+
   draw(ctxt) {
     if (this.digits.length > 0) {
-      // console.log ( "Digits = " + this.digits );
       for (let i=0; i<this.digits.length; i++) {
         let shft = this.digits.length - (i+1);
         let offset = -22 * shft;
-        // console.log ( "n = " + this.digits.length + ", i = " + i + ", s = " + shft );
         this.draw_digit ( ctxt, this.digits[i], offset );
       }
-      /*
-        n  i  s
-        1  0  0  s =
-        2  0  1
-        2  1  0
-        3  0  2
-        3  1  1
-        3  2  0  s = n - (i+1)
-      */
-      /*
-      this.draw_digit ( ctxt, 3, 0 );
-      this.draw_digit ( ctxt, 2, -22 );
-      this.draw_digit ( ctxt, 1, -44 );
-      */
     }
   }
 }
@@ -878,18 +832,14 @@ function update_canvas() {
         ctxt.closePath();
       }
 
+      // Draw the output display
       display_out.draw ( ctxt );
-
-      // ctxt.fillStyle = "#ff8888";
-      // ctxt.fillRect((w/2)-10,(h/2)-10,20,20);
-
     };
   }
 }
 
 function setup_canvas() {
   var canvas = document.getElementById('drawing_area');
-  // if (consoleDebug) console.log ( "setup_canvas" );
   if (canvas != null) {
     var ctxt = canvas.getContext('2d');
     var w = canvas.width = 640;
@@ -908,7 +858,6 @@ function setup_canvas() {
 }
 
 function draw_canvas() {
-  // window.alert ( "Draw Canvas" );
   var drawing_area = document.getElementById ( "drawing_area" );
   if (drawing_area != null) {
     var ctxt = drawing_area.getContext("2d");
@@ -933,36 +882,33 @@ function mouse_down ( event ) {
 stopRunning = false;
 function mainLoop()
 {
-   // if (consoleDebug) console.log("sim: enter mainLoop");
+  if (mainLoop.bInMainLoop)
+    return;
 
-   if (mainLoop.bInMainLoop)
-      return;
+  mainLoop.bInMainLoop = true;
+  mainLoop.bStayInLoop = false;    // by default, release main loop
 
-   mainLoop.bInMainLoop = true;
-   mainLoop.bStayInLoop = false;    // by default, release main loop
+  if (typeof mainLoop.nCounter == "undefined")
+    mainLoop.nCounter = 0;
 
-   if (typeof mainLoop.nCounter == "undefined")
-      mainLoop.nCounter = 0;
+  if (!stopRunning) {
+   exec_next();
+  }
 
-   if (!stopRunning) {
-	   exec_next();
-   }
+  ++mainLoop.nCounter;
 
-   ++mainLoop.nCounter;
+  mainLoop.bStayInLoop = true;
 
-   mainLoop.bStayInLoop = true;
+  if (stopRunning)
+  mainLoop.bStayInLoop = false;
 
-   if (stopRunning)
-	  mainLoop.bStayInLoop = false;
+  mainLoop.bInMainLoop = false;
 
-   mainLoop.bInMainLoop = false;
+  if (mainLoop.bStayInLoop) {
+    setTimeout ( "mainLoop()", clock.get_speed_ms() ); // Call mainLoop X ms from now
+  }
 
-   if (mainLoop.bStayInLoop)
-      setTimeout ("mainLoop()", clock.get_speed_ms()); // Call mainLoop 1ms from now
-
-   // if (consoleDebug) console.log("sim: exit mainLoop");
-
-   return mainLoop.bStayInLoop;
+  return mainLoop.bStayInLoop;
 } // mainLoop
 
 running = false;
@@ -970,22 +916,9 @@ run_counter = 1;
 function run_stop() {
 	running = !running;
 	if (running) {
-//x		document.getElementById('RunStop').innerHTML = "<u>Run</u>/Stop";
-//x		document.getElementById('RunStop').setAttribute("style", "background-color: #FF9999;");
 		run();
 	} else {
-//x		document.getElementById('RunStop').innerHTML = "Run/<u>Stop</u>";
-//x		document.getElementById('RunStop').setAttribute("style", "");
 		stop();
-//x		if (consoleDebug) console.log ( "Opcodes Used:" );
-//x		for (i=0; i<16; i++) {
-//x			s = " " + hex2(i) + ":  ";
-//x			for (j=0; j<16; j++) {
-//x				s += " " + hex1(used_ops[(16*i)+j]);
-//x			}
-//x			if (consoleDebug) console.log ( s + "\n" );
-//x		}
-		// if (consoleDebug) console.log ( "Used:\n" + used_ops );
 	}
 }
 function run() {
@@ -1075,7 +1008,7 @@ function exec_next() {
     } else if (upper == 0x0d) { // "?0D " + lower );
     } else if (upper == 0x0e) { // "OUT " + lower );
       // output_display
-      console.log ( "### Out = " + a_reg.get_value() );
+      console.log ( "Out = " + a_reg.get_value() );
       display_out.set_digits ( String(a_reg.get_value()) );
     } else if (upper == 0x0f) { // "HLT " + lower );
       stop();
@@ -1085,17 +1018,13 @@ function exec_next() {
 
     // Increment the program counter as needed
     pc = (pc + 1) % 16;
-    // console.log ( "PC = " + pc );
     prog_ctr.set_value ( pc );
-    // console.log ( "pc = " + pc );
-    // console.log ( "prog_ctr = " + prog_ctr );
   }
 
   // Set all others to random values (used during development)
   randomize_all_bits();
   update_canvas();
 
-	// if (consoleDebug) console.log ( "Executed " + count );
 	count = count + 1;
 }
 
