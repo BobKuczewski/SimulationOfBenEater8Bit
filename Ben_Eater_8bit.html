@@ -163,6 +163,67 @@ function display_status() {
   0x40,
   0x80
 */
+function change_example() {
+  if (document.getElementById("examples").value == "Examples") {
+    memory = [ // Zero
+    /* 0 */ 0,
+    /* 1 */ 0,
+    /* 2 */ 0,
+    /* 3 */ 0,
+    /* 4 */ 0,
+    /* 5 */ 0,
+    /* 6 */ 0,
+    /* 7 */ 0,
+    /* 8 */ 0,
+    /* 9 */ 0,
+    /* a */ 0,
+    /* b */ 0,
+    /* c */ 0,
+    /* d */ 0,
+    /* e */ 0,
+    /* f */ 0,
+    ];
+  } else if (document.getElementById("examples").value == "Counter") {
+    memory = [ // Count forever
+    /* 0 */ 0x51,  // ldi 1   ; 1
+    /* 1 */ 0x4f,  // sta f   ; r[f] = 1
+    /* 2 */ 0x50,  // ldi 0   ; a = 0
+    /* 3 */ 0x2f,  // add [f] ; a = a + 1
+    /* 4 */ 0xe0,  // out     ;
+    /* 5 */ 0x63,  // jmp 3   ;
+    /* 6 */ 0x4d,  // sta [d] ; x = y
+    /* 7 */ 0x1f,  // lda [f] ; z
+    /* 8 */ 0x4e,  // sta [e] ; y = z
+    /* 9 */ 0x1d,  // lda [d] ; x
+    /* a */ 0xe0,  // out
+    /* b */ 0x70,  // jc  0   ; jump carry to next Fib
+    /* c */ 0x63,  // jmp 3   ; keep adding
+    /* d */ 0x00,  // x
+    /* e */ 0x00,  // y
+    /* f */ 0x00,  // value
+    ];
+  } else if (document.getElementById("examples").value == "Fibonacci") {
+    memory = [ // Fibonacci Numbers up to 144
+    /* 0 */ 0x51,  // ldi 1   ; 1
+    /* 1 */ 0x4e,  // sta e   ; y(e) = 1
+    /* 2 */ 0x50,  // ldi 0   ; x = 0
+    /* 3 */ 0x2e,  // add [e] ; x + y
+    /* 4 */ 0x4f,  // sta [f] ; z = x + y
+    /* 5 */ 0x1e,  // lda [e] ; y
+    /* 6 */ 0x4d,  // sta [d] ; x = y
+    /* 7 */ 0x1f,  // lda [f] ; z
+    /* 8 */ 0x4e,  // sta [e] ; y = z
+    /* 9 */ 0x1d,  // lda [d] ; x
+    /* a */ 0xe0,  // out
+    /* b */ 0x70,  // jc  0   ; jump carry to next Fib
+    /* c */ 0x63,  // jmp 3   ; keep adding
+    /* d */ 0x00,  // x
+    /* e */ 0x00,  // y
+    /* f */ 0x00,  // z
+    ];
+  }
+  display_status();
+}
 
 
 var consoleDebug = false;
@@ -1038,7 +1099,6 @@ function cpu_reset() {
 	mainLoop.nCounter = 0;
 }
 
-
 window.onload = setup_canvas;
 
 setup_canvas();
@@ -1055,6 +1115,13 @@ setup_canvas();
 <canvas id="drawing_area" onmousedown="mouse_down(event)" onmouseup="mouse_up(event)"></canvas>
 </td>
 <td id="status_area">
+
+<select id="examples" onchange="change_example()">
+<option value="Examples">Examples</option>
+<option value="Counter">Counter</option>
+<option value="Fibonacci">Fibonacci</option>
+</select>
+
 <pre id="next_instruction">Next goes here.
 </pre>
 <p></p>
