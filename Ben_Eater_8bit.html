@@ -274,7 +274,7 @@ var red_off = "#bb2222";
 var yellow_on = "#ffff00";
 var yellow_off = "#e0980e";
 var blue_on = "#bbccff";
-var blue_off = "#162560";
+var blue_off = "#304090";
 var green_on = "#daff0c";
 var green_off = "#185621";
 
@@ -802,8 +802,8 @@ class SumRegister extends Register {
 class CarryRegister extends Register {
   constructor (name,nbits) {
     super("Carry Bit",nbits);
-    this.on_color = blue_on;
-    this.off_color = blue_off;
+    this.on_color = green_on;
+    this.off_color = green_off;
     this.radius = 5;
     this.state = [false];
     this.position = [ [562,133] ];
@@ -813,8 +813,8 @@ class CarryRegister extends Register {
 class ZeroRegister extends Register {
   constructor (name,nbits) {
     super("Zero Bit",nbits);
-    this.on_color = blue_on;
-    this.off_color = blue_off;
+    this.on_color = green_on;
+    this.off_color = green_off;
     this.radius = 5;
     this.state = [false];
     this.position = [ [572,133] ];
