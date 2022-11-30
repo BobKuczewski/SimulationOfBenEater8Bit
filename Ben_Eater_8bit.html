@@ -588,6 +588,76 @@ class InstructionData extends Register {
   }
 }
 
+class SevenSegmentDisplay extends Register {
+  constructor (name,nbits) {
+    super("Instruction Operation",nbits);
+    this.digits = "0";
+    this.on_color = red_on;
+    this.off_color = red_off;
+    this.radius = 5;
+    this.state = [true,true,true,true,true,true,true];
+    let off = 35;
+    this.position = [ [565+off,333], [578+off,332], [576+off,343], [574+off,355], [561+off,355], [563+off,343] ];
+    this.segments = [ [0,1], [1,2], [2,3], [3,4], [4,5], [5,0], [2,5] ];
+    this.digit_segments = [
+      /* 0 */ [0,1,2,3,4,5],
+      /* 1 */ [1,2],
+      /* 2 */ [0,1,6,4,3],
+      /* 3 */ [0,1,2,3,6],
+      /* 4 */ [1,2,5,6],
+      /* 5 */ [0,2,3,5,6],
+      /* 6 */ [0,2,3,4,5,6],
+      /* 7 */ [0,1,2],
+      /* 8 */ [0,1,2,3,4,5,6],
+      /* 9 */ [0,1,2,3,5,6],
+    ];
+  }
+  set_digits ( digits ) {
+    this.digits = digits;
+  }
+  draw_digit ( ctxt, d, offset ) {
+    let segs = this.digit_segments[d];
+    // console.log ( segs );
+    ctxt.strokeStyle = "#fd4a57";
+    ctxt.lineWidth = 3;
+    for (let i=0; i<segs.length; i++) {
+      let seg = this.segments[segs[i]]
+      // console.log ( seg );
+      let start = this.position[seg[0]];
+      let end   = this.position[seg[1]];
+      ctxt.beginPath();
+      ctxt.moveTo(offset+start[0], start[1]);
+      ctxt.lineTo(offset+end[0], end[1]);
+      ctxt.stroke();
+    }
+  }
+  draw(ctxt) {
+    if (this.digits.length > 0) {
+      // console.log ( "Digits = " + this.digits );
+      for (let i=0; i<this.digits.length; i++) {
+        let shft = this.digits.length - (i+1);
+        let offset = -22 * shft;
+        // console.log ( "n = " + this.digits.length + ", i = " + i + ", s = " + shft );
+        this.draw_digit ( ctxt, this.digits[i], offset );
+      }
+      /*
+        n  i  s
+        1  0  0  s =
+        2  0  1
+        2  1  0
+        3  0  2
+        3  1  1
+        3  2  0  s = n - (i+1)
+      */
+      /*
+      this.draw_digit ( ctxt, 3, 0 );
+      this.draw_digit ( ctxt, 2, -22 );
+      this.draw_digit ( ctxt, 1, -44 );
+      */
+    }
+  }
+}
+
 
 function decode ( instruction ) {
   let out = "";
@@ -623,6 +693,7 @@ b_reg = new BRegister("RegisterB", 8);
 sum_reg = new SumRegister("Sum", 8);
 carry_bit = new CarryRegister("Carry", 1);
 zero_bit = new ZeroRegister("Zero", 1);
+display_out = new SevenSegmentDisplay("Display", 3);
 
 var run_mode_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var program_mode_LEDs = [ [false,55,111] ];  // Red near Address Register DIP Switch
@@ -807,6 +878,7 @@ function update_canvas() {
         ctxt.closePath();
       }
 
+      display_out.draw ( ctxt );
 
       // ctxt.fillStyle = "#ff8888";
       // ctxt.fillRect((w/2)-10,(h/2)-10,20,20);
@@ -1002,7 +1074,9 @@ function exec_next() {
     } else if (upper == 0x0c) { // "?0C " + lower );
     } else if (upper == 0x0d) { // "?0D " + lower );
     } else if (upper == 0x0e) { // "OUT " + lower );
+      // output_display
       console.log ( "### Out = " + a_reg.get_value() );
+      display_out.set_digits ( String(a_reg.get_value()) );
     } else if (upper == 0x0f) { // "HLT " + lower );
       stop();
       clock.clock_auto_button[0][0] = false;
