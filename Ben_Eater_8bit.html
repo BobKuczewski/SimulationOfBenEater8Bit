@@ -342,10 +342,13 @@ class Register {
   }
 }
 
-class ClockModule extends Register {
+class ClockModule { // extends Register {
 
   constructor (name,nbits) {
-    super(name,nbits);
+    // super(name,nbits);
+    this.nbits = nbits;
+    this.reg_name = name;
+    this.state = false;
     this.reset();
   }
 
@@ -366,6 +369,14 @@ class ClockModule extends Register {
 
   half_tick() {
     this.state = ! this.state;
+  }
+
+  get_state() {
+    return ( this.state );
+  }
+
+  set_value( v ) {
+    this.state = v;
   }
 
   get_speed_ms() {
@@ -1166,6 +1177,7 @@ function cpu_reset() {
 	run_counter = 1;
 	mainLoop.nCounter = 0;
 	ucode_ctr.reset();
+	update_canvas();
 }
 
 window.onload = setup_canvas;
