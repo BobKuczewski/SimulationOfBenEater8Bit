@@ -222,6 +222,25 @@ function change_example() {
     /* e */ 0x00,  // y
     /* f */ 0x00,  // value
     ];
+  } else if (document.getElementById("examples").value == "Add Halt") {
+    memory = [ // Count and halt
+    /* 0 */ 0x51,  // ldi 1   ; 1
+    /* 1 */ 0x4f,  // sta f   ; r[f] = 1
+    /* 2 */ 0x51,  // ldi 1   ; a = 1
+    /* 3 */ 0x2f,  // add [f] ; a = a + 1
+    /* 4 */ 0xe0,  // out     ;
+    /* 5 */ 0x4f,  // sta f   ;
+    /* 6 */ 0x52,  // ldi 2   ; a = 2
+    /* 7 */ 0x2f,  // add [f] ; a = a + 2
+    /* 8 */ 0xe0,  // out     ;
+    /* 9 */ 0x4f,  // sta f   ;
+    /* a */ 0x53,  // ldi 3   ; a = 3
+    /* b */ 0x2f,  // add [f] ; a = a + 3
+    /* c */ 0xe0,  // out     ;
+    /* d */ 0x4f,  // sta f   ;
+    /* e */ 0xff,  // halt
+    /* f */ 0x00,  // value
+    ];
   } else if (document.getElementById("examples").value == "Fibonacci") {
     memory = [ // Fibonacci Numbers up to 144
     /* 0 */ 0x51,  // ldi 1   ; 1
@@ -347,7 +366,7 @@ class Button {
   constructor ( name, center_x, center_y, w, h ) {
     this.button_name = name;
     this.down_color = "#ffcccc80";
-    this.up_color   = "#eeeeee80";
+    this.up_color   = "#ccccff80";
     this.down = false;
     this.center_x = center_x;
     this.center_y = center_y;
@@ -502,6 +521,11 @@ class ClockModule { // extends Register {
     this.reg_name = name;
     this.state = false;
     this.reset();
+  }
+
+  stop() {
+    stop();
+    this.new_clock_run_stop_button.down = false;
   }
 
   reset() {
@@ -939,15 +963,6 @@ function decode ( instruction ) {
   return ( out );
 }
 
-//test_clock_step = new ClockStepButton ( "TestStep", 69, 32, 50, 50 );
-//button_list.push ( test_clock_step );
-
-test_btn1 = new Button ( "Test1", 600, 50, 40, 40 );
-button_list.push ( test_btn1 );
-
-test_btn2 = new Button ( "Test2", 550, 20, 20, 20 );
-button_list.push ( test_btn2 );
-
 clock = new ClockModule("Clock", 1);
 ucode_ctr = new uCodeCounter("uCodeCounter", 3 );
 prog_ctr = new ProgramCounter("ProgramCounter", 4);
@@ -1308,9 +1323,10 @@ function exec_next() {
       console.log ( "Out = " + a_reg.get_value() );
       display_out.set_digits ( String(a_reg.get_value()) );
     } else if (upper == 0x0f) { // "HLT " + lower );
+      clock.stop();
       stop();
       // clock.clock_run_stop_button[0][0] = false;
-      stop();
+      // stop();
     }
 
     // Increment the program counter as needed
@@ -1357,6 +1373,7 @@ setup_canvas();
 <option value="Examples">Examples</option>
 <option value="No Ops">No Ops</option>
 <option value="Counter">Counter</option>
+<option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
 </select>
 
