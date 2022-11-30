@@ -346,7 +346,7 @@ class Register {
 class Button {
   constructor ( name, center_x, center_y, w, h ) {
     this.button_name = name;
-    this.down_color = "#ffdddd80";
+    this.down_color = "#ffcccc80";
     this.up_color   = "#eeeeee80";
     this.down = false;
     this.center_x = center_x;
@@ -357,8 +357,7 @@ class Button {
     this.corner_y = this.center_y - (this.height/2);
   }
   get_corrected_coords ( event ) {
-    // This function is needed on FireFox because offsetX and offsetY are not correct.
-    // Normal event coords: screenX, screenY, pageX, pageY, clientX, clientY, offsetX, offsetY
+    // This function is needed on browsers where offsetX and offsetY are not correct.
     let offsets = [];
     let target = event.target || event.srcElement;
     let rect = target.getBoundingClientRect();
@@ -367,6 +366,12 @@ class Button {
     let corrected = [offsetX, offsetY];
     return corrected;
   }
+  set_down() {
+    this.down = true;
+  }
+  set_up() {
+    this.down = false;
+  }
   set_down_color ( color ) {
     this.down_color = color;
   }
@@ -374,8 +379,9 @@ class Button {
     this.up_color = color;
   }
   draw(ctxt) {
-    ctxt.fillStyle = this.up_color;
     if (this.down) {
+      ctxt.fillStyle = this.down_color;
+    } else {
       ctxt.fillStyle = this.up_color;
     }
     ctxt.fillRect( this.corner_x, this.corner_y, this.width, this.height );
@@ -391,23 +397,43 @@ class Button {
   }
   mouse_down ( event ) {
     if (this.event_in_button(event)) {
+      this.down = true;
+      update_canvas();
       this.down_action ( event );
     }
   }
   mouse_up ( event ) {
     if (this.event_in_button(event)) {
+      this.down = false;
+      update_canvas();
       this.up_action ( event );
     }
   }
   down_action ( event ) {
     // Implement in subclasses
-    console.log ( "Button " + this.button_name + " down" );
+    // console.log ( "Button " + this.button_name + " down" );
   }
   up_action ( event ) {
     // Implement in subclasses
-    console.log ( "Button " + this.button_name + " up" );
+    // console.log ( "Button " + this.button_name + " up" );
   }
 }
+
+class ToggleButton extends Button {
+  constructor ( name, center_x, center_y, w, h ) {
+    super ( name, center_x, center_y, w, h );
+  }
+  mouse_down ( event ) {
+    if (this.event_in_button(event)) {
+      this.down = !this.down;
+      update_canvas();
+      this.down_action ( event );
+    }
+  }
+  mouse_up ( event ) {
+  }
+}
+
 
 var button_list = [];
 
@@ -433,10 +459,45 @@ function execute_button_list_up ( event ) {
   }
 }
 
+class ClockStepButton extends Button { // clock_step
+  constructor ( name, center_x, center_y, w, h, clock ) {
+    super ( name, center_x, center_y, w, h );
+    this.clock = clock;  // This is the clock module associated with this button
+  }
+  down_action ( event ) {
+    step();
+    update_canvas();
+  }
+  up_action ( event ) {
+    step();
+    update_canvas();
+  }
+}
+
+class ClockRunStopButton extends ToggleButton { // clock_run_stop_button
+  constructor ( name, center_x, center_y, w, h, clock ) {
+    super ( name, center_x, center_y, w, h );
+    this.clock = clock;  // This is the clock module associated with this button
+  }
+  down_action ( event ) {
+    clock.mouse_down(event);
+    // update_canvas();
+  }
+  up_action ( event ) {
+    clock.mouse_up(event);
+    // update_canvas();
+  }
+}
+
+
 class ClockModule { // extends Register {
 
   constructor (name,nbits) {
     // super(name,nbits);
+    this.new_clock_run_stop_button = new ClockRunStopButton ( "Clock Run/Stop", 121, 29, 20, 20, this );
+    button_list.push ( this.new_clock_run_stop_button );
+    this.clock_step_button = new ClockStepButton ( "Clock Step", 69, 32, 20, 20, this );
+    button_list.push ( this.clock_step_button );
     this.nbits = nbits;
     this.reg_name = name;
     this.state = false;
@@ -447,8 +508,7 @@ class ClockModule { // extends Register {
     this.state = false;
     this.reset_button = [ [false,32,344] ];
     this.clock_speed_button = [ [200,25,16] ];
-    this.clock_run_stop_button = [ [false,121,29] ];
-    this.clock_step_button = [ [true,69,32] ];
+    // this.clock_run_stop_button = [ [false,121,29] ];
     this.clock_speeds = [ 1000, 200, 2 ];
     this.on_color = blue_on;
     this.off_color = blue_off;
@@ -475,20 +535,13 @@ class ClockModule { // extends Register {
   }
 
   mouse_up ( event ) {
-    if ( (event.clientX >= this.clock_step_button[0][1]) && (event.clientX <= this.clock_step_button[0][1]+20) ) {
-      if ( (event.clientY >= this.clock_step_button[0][2]) && (event.clientY <= this.clock_step_button[0][2]+20) ) {
-        // if (consoleDebug) console.log ( "Clock up with " + event.clientX + ", " + event.clientY );
-        step();
-        update_canvas();
-      }
-    }
   }
 
   mouse_down ( event ) {
     if ( (event.clientX >= this.reset_button[0][1]) && (event.clientX <= this.reset_button[0][1]+20) ) {
       if ( (event.clientY >= this.reset_button[0][2]) && (event.clientY <= this.reset_button[0][2]+20) ) {
         // if (consoleDebug) console.log ( "Reset down with " + event.clientX + ", " + event.clientY );
-        this.clock_run_stop_button[0][0] = false;
+        // this.clock_run_stop_button[0][0] = false;
         cpu_reset();
         this.state = false;
         clock.set_value(false);
@@ -506,23 +559,23 @@ class ClockModule { // extends Register {
         display_out.set_value(0);
         display_out.set_digits ("0");
         update_canvas();
+        return;
       }
     }
-    if ( (event.clientX >= this.clock_step_button[0][1]) && (event.clientX <= this.clock_step_button[0][1]+20) ) {
-      if ( (event.clientY >= this.clock_step_button[0][2]) && (event.clientY <= this.clock_step_button[0][2]+20) ) {
-        // if (consoleDebug) console.log ( "Clock down with " + event.clientX + ", " + event.clientY );
-        step();
-        update_canvas();
-      }
+
+    if (this.new_clock_run_stop_button.down) {
+      run();
+    } else {
+      stop();
     }
-    if ( (event.clientX >= this.clock_run_stop_button[0][1]) && (event.clientX <= this.clock_run_stop_button[0][1]+20) ) {
-      if ( (event.clientY >= this.clock_run_stop_button[0][2]) && (event.clientY <= this.clock_run_stop_button[0][2]+20) ) {
-        run_stop();
-        this.clock_run_stop_button[0][0] = !this.clock_run_stop_button[0][0];
-        // if (consoleDebug) console.log ( "auto toggled to " + this.clock_run_stop_button[0][0] );
-        update_canvas();
-      }
-    }
+    //run_stop();
+    //this.clock_run_stop_button[0][0] = !this.clock_run_stop_button[0][0];
+    // if (consoleDebug) console.log ( "auto toggled to " + this.clock_run_stop_button[0][0] );
+    update_canvas();
+    //}
+    //}
+
+
     if ( (event.clientX >= this.clock_speed_button[0][1]-10) && (event.clientX <= this.clock_speed_button[0][1]+10) ) {
       if ( (event.clientY >= this.clock_speed_button[0][2]-10) && (event.clientY <= this.clock_speed_button[0][2]+10) ) {
         // if (consoleDebug) console.log ( "toggle speed button pressed" );
@@ -542,6 +595,7 @@ class ClockModule { // extends Register {
         update_canvas();
       }
     }
+
   }
 
   draw(ctxt) {
@@ -556,16 +610,14 @@ class ClockModule { // extends Register {
     }
     ctxt.fillRect( this.clock_speed_button[0][1]-20, this.clock_speed_button[0][2]-20, 20,20);
 
+    /*
     // Draw the Run/Stop or "clock_run_stop_button" button
     ctxt.fillStyle = "#ffffff88";
     if (this.clock_run_stop_button[0][0]) {
       ctxt.fillStyle = "#ff888888";
     }
     ctxt.fillRect( this.clock_run_stop_button[0][1]-10, this.clock_run_stop_button[0][2]-10, 20,20);
-
-    // Draw the Single Step or "clock_step_button" button
-    ctxt.fillStyle = "#ffffff88";
-    ctxt.fillRect( this.clock_step_button[0][1]-10, this.clock_step_button[0][2]-10, 20,20);
+    */
 
     // Draw the Reset "reset_button" button
     ctxt.fillStyle = "#ffffff88";
@@ -887,6 +939,9 @@ function decode ( instruction ) {
   return ( out );
 }
 
+//test_clock_step = new ClockStepButton ( "TestStep", 69, 32, 50, 50 );
+//button_list.push ( test_clock_step );
+
 test_btn1 = new Button ( "Test1", 600, 50, 40, 40 );
 button_list.push ( test_btn1 );
 
@@ -1079,8 +1134,7 @@ function setup_canvas() {
 
       update_canvas();
     };
-    // image.src = 'computer_background_640.png';
-    image.src = 'computer_background_640_grid.png';
+    image.src = 'computer_background_640.png';
   }
 }
 
@@ -1255,7 +1309,7 @@ function exec_next() {
       display_out.set_digits ( String(a_reg.get_value()) );
     } else if (upper == 0x0f) { // "HLT " + lower );
       stop();
-      clock.clock_run_stop_button[0][0] = false;
+      // clock.clock_run_stop_button[0][0] = false;
       stop();
     }
 
