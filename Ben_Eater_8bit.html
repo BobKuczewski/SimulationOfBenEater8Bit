@@ -78,8 +78,6 @@ function load_hex() {
   hex = hex.trim();
   if (hex.length > 0) {
     let hex_list = hex.trim().replaceAll('\n',' ').replace('  ',' ').split(' ');
-    console.log ( "Hex: " + hex );
-    console.log ( "List: " + hex_list );
     for (let i=0; i<hex_list.length; i++) {
       hex_list[i] = parseInt ( hex_list[i], 16 );
     }
@@ -93,40 +91,32 @@ function load_hex() {
 
 function assemble() {
   let asm = document.getElementById("Source Code").value;
-  console.log ( "Assembling:\n" + asm );
   let asm_list = asm.trim().replaceAll('\r','\n').split('\n');
-  console.log ( "Assembly list:\n" + asm_list );
   let instr_list = [];
   for (let i=0; i<asm_list.length; i++) {
     if (asm_list[i].trim().length > 0) {
       instr_list.push ( asm_list[i].trim() );
     }
   }
-  console.log ( "Instr List:\n" + instr_list );
   for (let i=0; i<instr_list.length; i++) {
     instr_list[i] = instr_list[i].replaceAll('  ',' ').replaceAll('  ',' ');
     instr_list[i] = instr_list[i].replaceAll('  ',' ').replaceAll('  ',' ');
     instr_list[i] = instr_list[i].replaceAll('  ',' ').replaceAll('  ',' ');
-    console.log ( instr_list[i] );
   }
   let hex_code = "";
   for (let i=0; i<instr_list.length; i++) {
     let opcode = encode ( instr_list[i] );
-    console.log ( "  " + hex2(opcode) + " from " + instr_list[i] );
     hex_code = hex_code + hex2(opcode) + "\n";
   }
   document.getElementById("Hex Code").value = hex_code;
 }
 
 function change_example() {
-  console.log ( "Changing example" );
   if (document.getElementById("examples").value == "Examples") {
-    console.log ( "Loading " + document.getElementById("examples").value );
     xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
     document.getElementById("Source Code").value = "";
     // document.getElementById("Hex Code").value = "";
   } else if (document.getElementById("examples").value == "No Ops") {
-    console.log ( "Loading " + document.getElementById("examples").value );
     xmemory = [ // No Ops
     /* 0 */ 0,
     /* 1 */ 0,
@@ -148,7 +138,6 @@ function change_example() {
     document.getElementById("Source Code").value = "0 NOP\n0 NOP\n0 HLT\n";
     // document.getElementById("Hex Code").value = "00\n00\nff\n";
   } else if (document.getElementById("examples").value == "Counter") {
-    console.log ( "Loading " + document.getElementById("examples").value );
     xmemory = [ // Count forever
     /* 0 */ 0x51,  // ldi 1   ; 1
     /* 1 */ 0x4f,  // sta f   ; r[f] = 1
@@ -173,7 +162,6 @@ function change_example() {
     // document.getElementById("Hex Code").value =
     //   "51 4f 50 2f e0 63 4d 1f 4e 1d e0 70 63 00 00 00".trim().split(' ').join('\n');
   } else if (document.getElementById("examples").value == "Add Halt") {
-    console.log ( "Loading " + document.getElementById("examples").value );
     xmemory = [ // Count and halt
     /* 0 */ 0x51,  // ldi 1   ; 1
     /* 1 */ 0x4f,  // sta f   ; r[f] = 1
@@ -198,7 +186,6 @@ function change_example() {
     // document.getElementById("Hex Code").value =
     //  "51 4f 51 2f e0 4f 52 2f e0 4f 53 2f e0 4f ff 00".trim().split(' ').join('\n');
   } else if (document.getElementById("examples").value == "Fibonacci") {
-    console.log ( "Loading " + document.getElementById("examples").value );
     xmemory = [ // Fibonacci Numbers up to 144
     /* 0 */ 0x51,  // ldi 1   ; 1
     /* 1 */ 0x4e,  // sta e   ; y(e) = 1
@@ -1401,15 +1388,18 @@ setup_canvas();
 <center>
 Status<br/>
 <button type="button" onclick="reset_and_run()">Run</button>
+<button type="button" onclick="stop()">Stop</button>
 </center>
-<pre>----------------</pre>
+<pre>-----------------</pre>
 <pre id="next_instruction">Next goes here.
 </pre>
 <p></p>
 <pre id="mem_status">Memory goes here.
 </pre>
+<!--
 <p></p>
 &nbsp;<input type="checkbox" id="debug" checked onclick="toggle_debug();">Debug</input>
+-->
 </td>
 
 <td style="border: none;" valign="top">
