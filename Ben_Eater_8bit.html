@@ -8,15 +8,6 @@
 
 <script>
 
-// Reset
-/*
-Program Counter
-A & B
-Output Register
-Instruction Register
-Memory Address Register
-*/
-
 
 /* Instruction set:
 NOP = 0000 XXXX
@@ -355,15 +346,22 @@ class ClockModule extends Register {
 
   constructor (name,nbits) {
     super(name,nbits);
+    this.reset();
+  }
+
+  reset() {
     this.state = false;
+    this.reset_button = [ [false,32,344] ];
     this.clock_speed_button = [ [200,25,16] ];
-    this.clock_auto_button = [ [false,121,29] ];
+    this.clock_run_stop_button = [ [false,121,29] ];
     this.clock_step_button = [ [true,69,32] ];
     this.clock_speeds = [ 1000, 200, 2 ];
     this.on_color = blue_on;
     this.off_color = blue_off;
     this.position = [ 232, 6 ];
     this.radius = 5;
+    // console.log ( "Update Canvas" );
+    // update_canvas();
   }
 
   half_tick() {
@@ -385,6 +383,29 @@ class ClockModule extends Register {
   }
 
   mouse_down ( event ) {
+    if ( (event.clientX >= this.reset_button[0][1]) && (event.clientX <= this.reset_button[0][1]+20) ) {
+      if ( (event.clientY >= this.reset_button[0][2]) && (event.clientY <= this.reset_button[0][2]+20) ) {
+        // if (consoleDebug) console.log ( "Reset down with " + event.clientX + ", " + event.clientY );
+        this.clock_run_stop_button[0][0] = false;
+        cpu_reset();
+        this.state = false;
+        clock.set_value(false);
+        ucode_ctr.set_value(0);
+        prog_ctr.set_value(0);
+        mem_addr.set_value(0);
+        mem_data.set_value(0);
+        inst_op.set_value(0);
+        inst_data.set_value(0);
+        a_reg.set_value(0);
+        b_reg.set_value(0);
+        sum_reg.set_value(0);
+        carry_bit.set_value(0);
+        zero_bit.set_value(0);
+        display_out.set_value(0);
+        display_out.set_digits ("0");
+        update_canvas();
+      }
+    }
     if ( (event.clientX >= this.clock_step_button[0][1]) && (event.clientX <= this.clock_step_button[0][1]+20) ) {
       if ( (event.clientY >= this.clock_step_button[0][2]) && (event.clientY <= this.clock_step_button[0][2]+20) ) {
         // if (consoleDebug) console.log ( "Clock down with " + event.clientX + ", " + event.clientY );
@@ -392,11 +413,11 @@ class ClockModule extends Register {
         update_canvas();
       }
     }
-    if ( (event.clientX >= this.clock_auto_button[0][1]) && (event.clientX <= this.clock_auto_button[0][1]+20) ) {
-      if ( (event.clientY >= this.clock_auto_button[0][2]) && (event.clientY <= this.clock_auto_button[0][2]+20) ) {
+    if ( (event.clientX >= this.clock_run_stop_button[0][1]) && (event.clientX <= this.clock_run_stop_button[0][1]+20) ) {
+      if ( (event.clientY >= this.clock_run_stop_button[0][2]) && (event.clientY <= this.clock_run_stop_button[0][2]+20) ) {
         run_stop();
-        this.clock_auto_button[0][0] = !this.clock_auto_button[0][0];
-        // if (consoleDebug) console.log ( "auto toggled to " + this.clock_auto_button[0][0] );
+        this.clock_run_stop_button[0][0] = !this.clock_run_stop_button[0][0];
+        // if (consoleDebug) console.log ( "auto toggled to " + this.clock_run_stop_button[0][0] );
         update_canvas();
       }
     }
@@ -433,16 +454,20 @@ class ClockModule extends Register {
     }
     ctxt.fillRect( this.clock_speed_button[0][1]-20, this.clock_speed_button[0][2]-20, 20,20);
 
-    // Draw the Run/Stop or "clock_auto_button" button
+    // Draw the Run/Stop or "clock_run_stop_button" button
     ctxt.fillStyle = "#ffffff88";
-    if (this.clock_auto_button[0][0]) {
+    if (this.clock_run_stop_button[0][0]) {
       ctxt.fillStyle = "#ff888888";
     }
-    ctxt.fillRect( this.clock_auto_button[0][1]-10, this.clock_auto_button[0][2]-10, 20,20);
+    ctxt.fillRect( this.clock_run_stop_button[0][1]-10, this.clock_run_stop_button[0][2]-10, 20,20);
 
     // Draw the Single Step or "clock_step_button" button
     ctxt.fillStyle = "#ffffff88";
     ctxt.fillRect( this.clock_step_button[0][1]-10, this.clock_step_button[0][2]-10, 20,20);
+
+    // Draw the Reset "reset_button" button
+    ctxt.fillStyle = "#ffffff88";
+    ctxt.fillRect( this.reset_button[0][1]-10, this.reset_button[0][2]-10, 20,20);
 
     // Draw the Clock LED
     if (this.state) {
@@ -463,15 +488,24 @@ class uCodeCounter extends Register {
     super("uCodeCounter",nbits);
     this.state = 0;
     this.ucode_ctr_LEDs = [ [false,33,395],[false,43,395],[false,53,395] ];
-
     this.ucode_state_LEDs = [ [false,66,390],
                               [true,76,390],
                               [true,86,390],
                               [true,97,390],
                               [true,108,390],
-                              [false,120,390] ];
+                              [true,120,390] ];
     //                        [false,124,390],
     //                        [false,128,390] ];
+  }
+
+  reset() {
+    for (let i=0; i<this.ucode_ctr_LEDs.length; i++) {
+      this.ucode_ctr_LEDs[i][0] = false;
+    }
+    for (let i=0; i<this.ucode_state_LEDs.length; i++) {
+      this.ucode_state_LEDs[i][0] = true;
+    }
+    this.ucode_state_LEDs[0][0] = false;
   }
 
   update ( clock_state ) {
@@ -827,6 +861,7 @@ var image = new Image();
 var image_loaded = false;
 
 function update_canvas() {
+  // console.log ( "Inside Update Canvas" );
   display_status();
   var canvas = document.getElementById('drawing_area');
   // if (consoleDebug) console.log ( "update_canvas" );
@@ -1106,7 +1141,7 @@ function exec_next() {
       display_out.set_digits ( String(a_reg.get_value()) );
     } else if (upper == 0x0f) { // "HLT " + lower );
       stop();
-      clock.clock_auto_button[0][0] = false;
+      clock.clock_run_stop_button[0][0] = false;
       stop();
     }
 
@@ -1130,6 +1165,7 @@ function cpu_reset() {
 	stop();
 	run_counter = 1;
 	mainLoop.nCounter = 0;
+	ucode_ctr.reset();
 }
 
 window.onload = setup_canvas;
