@@ -342,6 +342,97 @@ class Register {
   }
 }
 
+
+class Button {
+  constructor ( name, center_x, center_y, w, h ) {
+    this.button_name = name;
+    this.down_color = "#ffdddd80";
+    this.up_color   = "#eeeeee80";
+    this.down = false;
+    this.center_x = center_x;
+    this.center_y = center_y;
+    this.width = w;
+    this.height = h;
+    this.corner_x = this.center_x - (this.width/2);
+    this.corner_y = this.center_y - (this.height/2);
+  }
+  get_corrected_coords ( event ) {
+    // This function is needed on FireFox because offsetX and offsetY are not correct.
+    // Normal event coords: screenX, screenY, pageX, pageY, clientX, clientY, offsetX, offsetY
+    let offsets = [];
+    let target = event.target || event.srcElement;
+    let rect = target.getBoundingClientRect();
+    let offsetX = event.clientX - rect.left;
+    let offsetY = event.clientY - rect.top;
+    let corrected = [offsetX, offsetY];
+    return corrected;
+  }
+  set_down_color ( color ) {
+    this.down_color = color;
+  }
+  set_up_color ( color ) {
+    this.up_color = color;
+  }
+  draw(ctxt) {
+    ctxt.fillStyle = this.up_color;
+    if (this.down) {
+      ctxt.fillStyle = this.up_color;
+    }
+    ctxt.fillRect( this.corner_x, this.corner_y, this.width, this.height );
+  }
+  event_in_button ( event ) {
+    let coords = this.get_corrected_coords ( event );
+    if ( (coords[0] >= this.corner_x) && (coords[0] <= (this.corner_x + this.width)) ) {
+      if ( (coords[1] >= this.corner_y) && (coords[1] <= (this.corner_y + this.height)) ) {
+        return ( true );
+      }
+    }
+    return ( false );
+  }
+  mouse_down ( event ) {
+    if (this.event_in_button(event)) {
+      this.down_action ( event );
+    }
+  }
+  mouse_up ( event ) {
+    if (this.event_in_button(event)) {
+      this.up_action ( event );
+    }
+  }
+  down_action ( event ) {
+    // Implement in subclasses
+    console.log ( "Button " + this.button_name + " down" );
+  }
+  up_action ( event ) {
+    // Implement in subclasses
+    console.log ( "Button " + this.button_name + " up" );
+  }
+}
+
+var button_list = [];
+
+function draw_button_list ( ctxt ) {
+  for (let i=0; i<button_list.length; i++) {
+    button_list[i].draw(ctxt);
+  }
+}
+
+function execute_button_list_down ( event ) {
+  // NOTE: The clientX and clientY from the event may need correction.
+  // This is handled in the button class, but not in the event itself.
+  for (let i=0; i<button_list.length; i++) {
+    button_list[i].mouse_down(event);
+  }
+}
+
+function execute_button_list_up ( event ) {
+  // NOTE: The clientX and clientY from the event may need correction.
+  // This is handled in the button class, but not in the event itself.
+  for (let i=0; i<button_list.length; i++) {
+    button_list[i].mouse_up(event);
+  }
+}
+
 class ClockModule { // extends Register {
 
   constructor (name,nbits) {
@@ -796,6 +887,11 @@ function decode ( instruction ) {
   return ( out );
 }
 
+test_btn1 = new Button ( "Test1", 600, 50, 40, 40 );
+button_list.push ( test_btn1 );
+
+test_btn2 = new Button ( "Test2", 550, 20, 20, 20 );
+button_list.push ( test_btn2 );
 
 clock = new ClockModule("Clock", 1);
 ucode_ctr = new uCodeCounter("uCodeCounter", 3 );
@@ -960,6 +1056,10 @@ function update_canvas() {
 
       // Draw the output display
       display_out.draw ( ctxt );
+
+      // Draw the buttons on top of everything else
+      draw_button_list ( ctxt );
+
     };
   }
 }
@@ -979,7 +1079,8 @@ function setup_canvas() {
 
       update_canvas();
     };
-    image.src = 'computer_background_640.png';
+    // image.src = 'computer_background_640.png';
+    image.src = 'computer_background_640_grid.png';
   }
 }
 
@@ -999,10 +1100,12 @@ function draw_canvas() {
 
 function mouse_up ( event ) {
   clock.mouse_up ( event );
+  execute_button_list_up ( event );
 }
 
 function mouse_down ( event ) {
   clock.mouse_down ( event );
+  execute_button_list_down ( event );
 }
 
 stopRunning = false;
