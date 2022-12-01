@@ -786,6 +786,46 @@ class ZeroRegister extends Register {
   }
 }
 
+class RunProgMode extends Register {
+  constructor (name,nbits) {
+    super("Run Mode",nbits);
+    this.on_color = green_on;
+    this.off_color = green_off;
+    this.radius = 5;
+    this.state = [true,false];
+    this.position = [ [45,111], [55,111] ];
+  }
+  set_value ( value ) {
+    // Value will only specify one bit
+    if (value == 0) {
+      this.state = [false,true]
+    } else {
+      this.state = [true,false]
+    }
+  }
+  draw ( ctxt ) {
+    // First draw the "Run" LED
+    if (this.state[0]) {
+      ctxt.fillStyle = this.on_color;
+    } else {
+      ctxt.fillStyle = this.off_color;
+    }
+    ctxt.beginPath();
+    ctxt.arc(this.position[0][0], this.position[0][1], this.radius, 0, 2 * Math.PI);
+    ctxt.fill();
+    ctxt.closePath();
+    // Next draw the "Program" LED (always opposite of "Run")
+    if (!this.state[0]) {
+      ctxt.fillStyle = red_on;
+    } else {
+      ctxt.fillStyle = red_off;
+    }
+    ctxt.beginPath();
+    ctxt.arc(this.position[1][0], this.position[1][1], this.radius, 0, 2 * Math.PI);
+    ctxt.fill();
+    ctxt.closePath();
+  }
+}
 
 class ProgramCounter extends Register {
   constructor (name,nbits) {
@@ -979,23 +1019,21 @@ function encode ( instruction ) {
 }
 
 clock = new ClockModule("Clock", 1);
-ucode_ctr = new uCodeCounter("uCodeCounter", 3 );
-prog_ctr = new ProgramCounter("ProgramCounter", 4);
-mem_addr = new MemoryAddress("MemoryAddress", 4);
-mem_data = new MemoryData("MemoryData", 8);
-inst_op = new InstructionOperation("InstructionOp", 4);
-inst_data = new InstructionData("InstructionData", 4);
-a_reg = new ARegister("RegisterA", 8);
-b_reg = new BRegister("RegisterB", 8);
+run_prog_mode = new RunProgMode ("Run Mode", 2);
+ucode_ctr = new uCodeCounter("uCode Counter", 3 );
+prog_ctr = new ProgramCounter("Program Counter", 4);
+mem_addr = new MemoryAddress("Memory Address", 4);
+mem_data = new MemoryData("Memory Data", 8);
+inst_op = new InstructionOperation("Instruction Op", 4);
+inst_data = new InstructionData("Instruction Data", 4);
+a_reg = new ARegister("Register A", 8);
+b_reg = new BRegister("Register B", 8);
 sum_reg = new SumRegister("Sum", 8);
 carry_bit = new CarryRegister("Carry", 1);
 zero_bit = new ZeroRegister("Zero", 1);
 bus = new BusContents("Bus", 8);
 control_word = new ControlWord("Control", 16);
 display_out = new SevenSegmentDisplay("Display", 3);
-
-var run_mode_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
-var program_mode_LEDs = [ [false,55,111] ];  // Red near Address Register DIP Switch
 
 
 function randomize_register_bits ( reg ) {
@@ -1007,24 +1045,6 @@ function randomize_register_bits ( reg ) {
     }
   }
 }
-
-function randomize_all_bits () {
-  // randomize_register_bits ( control_word_LEDs );
-  // randomize_register_bits ( mem_contents_LEDs );
-  // randomize_register_bits ( instr_low_LEDs );
-  // randomize_register_bits ( instr_high_LEDs );
-  // randomize_register_bits ( zero_flag_LEDs );
-  // randomize_register_bits ( carry_flag_LEDs );
-  // randomize_register_bits ( sum_register_LEDs );
-  // randomize_register_bits ( register_B_LEDs );
-  // randomize_register_bits ( register_A_LEDs );
-  // randomize_register_bits ( mem_address_LEDs );
-  // randomize_register_bits ( bus_value_LEDs );
-  // randomize_register_bits ( ucode_state_LEDs );
-  // randomize_register_bits ( ucode_ctr_LEDs );
-  // randomize_register_bits ( program_ctr_LEDs );
-}
-
 
 var image = new Image();
 var image_loaded = false;
@@ -1043,54 +1063,36 @@ function update_canvas() {
       ctxt.drawImage(image,0,0);
 
       // Draw the modules
-      // console.log ( "About to draw clock" );
+
+      // Draw the clock
       clock.draw(ctxt);
+
+      // Draw the micro-code counter
       ucode_ctr.draw(ctxt);
 
-      // Draw the run mode light
-      for (let i=0; i<run_mode_LEDs.length; i++) {
-        if (run_mode_LEDs[i][0]) {
-          ctxt.fillStyle = green_on;
-        } else {
-          ctxt.fillStyle = green_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(run_mode_LEDs[i][1], run_mode_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
-
       // Draw the program mode light
-      for (let i=0; i<program_mode_LEDs.length; i++) {
-        if (program_mode_LEDs[i][0]) {
-          ctxt.fillStyle = red_on;
-        } else {
-          ctxt.fillStyle = red_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(program_mode_LEDs[i][1], program_mode_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
+      run_prog_mode.draw ( ctxt );
 
-      // Draw the Program Counter
+      // Draw the Program Counter register
       prog_ctr.draw ( ctxt );
 
       // Draw the Bus lights
       bus.draw ( ctxt );
 
+      // Draw the memory address and memory data registers
       mem_addr.draw ( ctxt );
       mem_data.draw ( ctxt );
 
+      // Draw the A, B, and Sum registers
       a_reg.draw ( ctxt );
-
       b_reg.draw ( ctxt );
-
       sum_reg.draw ( ctxt );
 
+      // Draw the flags (carry and zero)
       carry_bit.draw ( ctxt );
       zero_bit.draw ( ctxt );
 
+      // Draw the instruction operation and data registers
       inst_op.draw ( ctxt );
       inst_data.draw ( ctxt );
 
@@ -1103,7 +1105,7 @@ function update_canvas() {
       // Draw the buttons on top of everything else
       draw_button_list ( ctxt );
 
-    };
+    }
   }
 }
 
@@ -1307,8 +1309,8 @@ function exec_next() {
     prog_ctr.set_value ( pc );
   }
 
-  // Set all others to random values (used during development)
-  randomize_all_bits();
+  // Update the canvas to cause a redraw of all changes
+
   update_canvas();
 
 	count = count + 1;
