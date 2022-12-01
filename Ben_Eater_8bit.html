@@ -559,6 +559,7 @@ class ClockModule { // extends Register {
         carry_bit.set_value(0);
         zero_bit.set_value(0);
         display_out.set_value(0);
+        bus.set_value(0);
         display_out.set_digits ("0");
         update_canvas();
         return;
@@ -847,6 +848,18 @@ class MemoryData extends Register {
   }
 }
 
+class BusContents extends Register {
+  constructor (name,nbits) {
+    super("BusContents",nbits);
+    this.on_color = gray_on;
+    this.off_color = gray_off;
+    this.radius = 5;
+    // Note that index 0 corresponds to bit 0 (LSB)
+    this.state = [false,true,false,false,false,false,false,false];
+    this.position = [ [289,6], [298,6], [307,6], [316,6], [325,6], [334,6], [343,6], [352,6] ];
+  }
+}
+
 
 class SevenSegmentDisplay extends Register {
   constructor (name,nbits) {
@@ -964,19 +977,11 @@ b_reg = new BRegister("RegisterB", 8);
 sum_reg = new SumRegister("Sum", 8);
 carry_bit = new CarryRegister("Carry", 1);
 zero_bit = new ZeroRegister("Zero", 1);
+bus = new BusContents("Bus", 8);
 display_out = new SevenSegmentDisplay("Display", 3);
 
 var run_mode_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var program_mode_LEDs = [ [false,55,111] ];  // Red near Address Register DIP Switch
-
-var bus_value_LEDs = [ [false,289,6],
-                       [true,298,6],
-                       [false,307,6],
-                       [true,316,6],
-                       [false,325,6],
-                       [true,334,6],
-                       [false,343,6],
-                       [true,352,6] ];
 
 var control_word_LEDs = [ [true,366,497],
                           [false,376,497],
@@ -1016,7 +1021,7 @@ function randomize_all_bits () {
   // randomize_register_bits ( register_B_LEDs );
   // randomize_register_bits ( register_A_LEDs );
   // randomize_register_bits ( mem_address_LEDs );
-  randomize_register_bits ( bus_value_LEDs );
+  // randomize_register_bits ( bus_value_LEDs );
   // randomize_register_bits ( ucode_state_LEDs );
   // randomize_register_bits ( ucode_ctr_LEDs );
   // randomize_register_bits ( program_ctr_LEDs );
@@ -1073,17 +1078,7 @@ function update_canvas() {
       prog_ctr.draw ( ctxt );
 
       // Draw the Bus lights
-      for (let i=0; i<bus_value_LEDs.length; i++) {
-        if (bus_value_LEDs[i][0]) {
-          ctxt.fillStyle = blue_on;
-        } else {
-          ctxt.fillStyle = blue_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(bus_value_LEDs[i][1], bus_value_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
+      bus.draw ( ctxt );
 
       mem_addr.draw ( ctxt );
       mem_data.draw ( ctxt );
@@ -1316,7 +1311,7 @@ function exec_next() {
       clock.stop();
       stop();
     }
-
+    bus.randomize_bits();
     // Increment the program counter as needed
     pc = (pc + 1) % 16;
     prog_ctr.set_value ( pc );
