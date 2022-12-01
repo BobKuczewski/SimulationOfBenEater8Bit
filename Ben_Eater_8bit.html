@@ -69,13 +69,18 @@ function display_status() {
   mem_disp.innerHTML = txt;
 }
 
+function single_spaces ( s ) {
+  let ss = s.trim();
+  while (ss.indexOf('  ') >= 0) {
+    ss = ss.replaceAll('  ',' ');
+  }
+  return ( ss );
+}
+
+
 function load_hex() {
   let hex = document.getElementById("Hex Code").value;
-  hex = hex.replaceAll('  ',' ').replaceAll('  ',' ').replaceAll('  ',' ');
-  hex = hex.replaceAll('  ',' ').replaceAll('  ',' ').replaceAll('  ',' ');
-  hex = hex.replaceAll('  ',' ').replaceAll('  ',' ').replaceAll('  ',' ');
-  hex = hex.replaceAll('  ',' ').replaceAll('  ',' ').replaceAll('  ',' ');
-  hex = hex.trim();
+  hex = single_spaces ( hex );
   if (hex.length > 0) {
     let hex_list = hex.trim().replaceAll('\n',' ').replace('  ',' ').split(' ');
     for (let i=0; i<hex_list.length; i++) {
@@ -99,9 +104,7 @@ function assemble() {
     }
   }
   for (let i=0; i<instr_list.length; i++) {
-    instr_list[i] = instr_list[i].replaceAll('  ',' ').replaceAll('  ',' ');
-    instr_list[i] = instr_list[i].replaceAll('  ',' ').replaceAll('  ',' ');
-    instr_list[i] = instr_list[i].replaceAll('  ',' ').replaceAll('  ',' ');
+    instr_list[i] = single_spaces ( instr_list[i] );
   }
   let hex_code = "";
   for (let i=0; i<instr_list.length; i++) {
@@ -947,28 +950,6 @@ function encode ( instruction ) {
     }
   }
   return ( -1 );
-  /*
-  let out = "";
-  let lower = instruction & 0x0f;
-  let upper = (instruction >> 4) & 0x0f;
-  if (upper == 0x00) out = ( "NOP " + lower );
-  if (upper == 0x01) out = ( "LDA " + lower );
-  if (upper == 0x02) out = ( "ADD " + lower );
-  if (upper == 0x03) out = ( "SUB " + lower );
-  if (upper == 0x04) out = ( "STA " + lower );
-  if (upper == 0x05) out = ( "LDI " + lower );
-  if (upper == 0x06) out = ( "JMP " + lower );
-  if (upper == 0x07) out = ( "JC  " + lower );
-  if (upper == 0x08) out = ( "JZ  " + lower );
-  if (upper == 0x09) out = ( "?09 " + lower );
-  if (upper == 0x0a) out = ( "?0A " + lower );
-  if (upper == 0x0b) out = ( "?0B " + lower );
-  if (upper == 0x0c) out = ( "?0C " + lower );
-  if (upper == 0x0d) out = ( "?0D " + lower );
-  if (upper == 0x0e) out = ( "OUT " + lower );
-  if (upper == 0x0f) out = ( "HLT " + lower );
-  return ( out );
-  */
 }
 
 clock = new ClockModule("Clock", 1);
@@ -1366,6 +1347,19 @@ function reset_and_run() {
   clock.run();
 }
 
+function run_stop_callback() {
+	running = !running;
+	if (running) {
+		document.getElementById('RunStop').innerHTML = "<u>Run</u>/Stop";
+		document.getElementById('RunStop').setAttribute("style", "background-color: #FF9999;");
+		run();
+	} else {
+		document.getElementById('RunStop').innerHTML = "Run/<u>Stop</u>";
+		document.getElementById('RunStop').setAttribute("style", "background-color: #99FF99;");
+		stop();
+	}
+}
+
 window.onload = setup_canvas;
 
 setup_canvas();
@@ -1386,11 +1380,12 @@ setup_canvas();
 
 <td id="status_area" style="border: none;" valign="top">
 <center>
-Status<br/>
-<button type="button" onclick="reset_and_run()">Run</button>
-<button type="button" onclick="stop()">Stop</button>
+Processor<br/>
+<button type="button" onclick="run_stop_callback();" id="RunStop" style="background-color: #99FF99;">Run/<u>Stop</u></button>
+<button type="button" onclick="reset_and_run()">Reset</button>
+
 </center>
-<pre>-----------------</pre>
+<!-- <pre>-----------------</pre> -->
 <pre id="next_instruction">Next goes here.
 </pre>
 <p></p>
