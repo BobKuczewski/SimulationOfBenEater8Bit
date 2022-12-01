@@ -241,13 +241,13 @@ var consoleDebug = false;
 
 var gray_on = "#cccccc";
 var gray_off = "#444444";
-var red_on = "#ff6060"; // "#ffcc88";
-var red_off = "#880000"; // "#bb2222";
+var red_on = "#ff6060";
+var red_off = "#880000";
 var yellow_on = "#ffff00";
-var yellow_off = "#e0980e";
+var yellow_off = "#705010";
 var blue_on = "#bbccff";
 var blue_off = "#304090";
-var green_on = "#daff0c";
+var green_on = "#80ff08";
 var green_off = "#185621";
 
 function toggle_debug() {
@@ -891,8 +891,8 @@ class MemoryData extends Register {
 class BusContents extends Register {
   constructor (name,nbits) {
     super("BusContents",nbits);
-    this.on_color = blue_on;
-    this.off_color = blue_off;
+    this.on_color = red_on;
+    this.off_color = red_off;
     this.radius = 5;
     // Note that index 0 corresponds to bit 0 (LSB)
     this.state = [false,false,false,false,false,false,false,false];
