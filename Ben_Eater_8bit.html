@@ -855,8 +855,21 @@ class BusContents extends Register {
     this.off_color = gray_off;
     this.radius = 5;
     // Note that index 0 corresponds to bit 0 (LSB)
-    this.state = [false,true,false,false,false,false,false,false];
+    this.state = [false,false,false,false,false,false,false,false];
     this.position = [ [289,6], [298,6], [307,6], [316,6], [325,6], [334,6], [343,6], [352,6] ];
+  }
+}
+
+class ControlWord extends Register {
+  constructor (name,nbits) {
+    super("ControlWord",nbits);
+    this.on_color = gray_on;
+    this.off_color = gray_off;
+    this.radius = 5;
+    // Note that index 0 corresponds to bit 0 (LSB)
+    this.state = [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false];
+    this.position = [ [366,497], [376,497], [385,497], [394,497], [403,497], [412,497], [421,497], [430,497],
+                      [439,497], [448,497], [457,497], [466,497], [475,497], [484,497], [493,497], [502,497] ];
   }
 }
 
@@ -978,27 +991,12 @@ sum_reg = new SumRegister("Sum", 8);
 carry_bit = new CarryRegister("Carry", 1);
 zero_bit = new ZeroRegister("Zero", 1);
 bus = new BusContents("Bus", 8);
+control_word = new ControlWord("Control", 16);
 display_out = new SevenSegmentDisplay("Display", 3);
 
 var run_mode_LEDs = [ [true,45,111] ];  // Green near Address Register DIP Switch
 var program_mode_LEDs = [ [false,55,111] ];  // Red near Address Register DIP Switch
 
-var control_word_LEDs = [ [true,366,497],
-                          [false,376,497],
-                          [false,385,497],
-                          [true,394,497],
-                          [false,403,497],
-                          [true,412,497],
-                          [false,421,497],
-                          [true,430,497],
-                          [false,439,497],
-                          [true,448,497],
-                          [false,457,497],
-                          [true,466,497],
-                          [false,475,497],
-                          [true,484,497],
-                          [false,493,497],
-                          [true,502,497] ];
 
 function randomize_register_bits ( reg ) {
   for (let i=0; i<reg.length; i++) {
@@ -1011,7 +1009,7 @@ function randomize_register_bits ( reg ) {
 }
 
 function randomize_all_bits () {
-  randomize_register_bits ( control_word_LEDs );
+  // randomize_register_bits ( control_word_LEDs );
   // randomize_register_bits ( mem_contents_LEDs );
   // randomize_register_bits ( instr_low_LEDs );
   // randomize_register_bits ( instr_high_LEDs );
@@ -1061,6 +1059,7 @@ function update_canvas() {
         ctxt.fill();
         ctxt.closePath();
       }
+
       // Draw the program mode light
       for (let i=0; i<program_mode_LEDs.length; i++) {
         if (program_mode_LEDs[i][0]) {
@@ -1096,17 +1095,7 @@ function update_canvas() {
       inst_data.draw ( ctxt );
 
       // Draw the Control Word lights
-      for (let i=0; i<control_word_LEDs.length; i++) {
-        if (control_word_LEDs[i][0]) {
-          ctxt.fillStyle = blue_on;
-        } else {
-          ctxt.fillStyle = blue_off;
-        }
-        ctxt.beginPath();
-        ctxt.arc(control_word_LEDs[i][1], control_word_LEDs[i][2], 5, 0, 2 * Math.PI);
-        ctxt.fill();
-        ctxt.closePath();
-      }
+      control_word.draw ( ctxt );
 
       // Draw the output display
       display_out.draw ( ctxt );
@@ -1312,6 +1301,7 @@ function exec_next() {
       stop();
     }
     bus.randomize_bits();
+    control_word.randomize_bits();
     // Increment the program counter as needed
     pc = (pc + 1) % 16;
     prog_ctr.set_value ( pc );
