@@ -241,8 +241,8 @@ var consoleDebug = false;
 
 var gray_on = "#cccccc";
 var gray_off = "#444444";
-var red_on = "#ffcc88";
-var red_off = "#bb2222";
+var red_on = "#ff6060"; // "#ffcc88";
+var red_off = "#880000"; // "#bb2222";
 var yellow_on = "#ffff00";
 var yellow_off = "#e0980e";
 var blue_on = "#bbccff";
@@ -891,8 +891,8 @@ class MemoryData extends Register {
 class BusContents extends Register {
   constructor (name,nbits) {
     super("BusContents",nbits);
-    this.on_color = gray_on;
-    this.off_color = gray_off;
+    this.on_color = blue_on;
+    this.off_color = blue_off;
     this.radius = 5;
     // Note that index 0 corresponds to bit 0 (LSB)
     this.state = [false,false,false,false,false,false,false,false];
@@ -903,8 +903,8 @@ class BusContents extends Register {
 class ControlWord extends Register {
   constructor (name,nbits) {
     super("ControlWord",nbits);
-    this.on_color = gray_on;
-    this.off_color = gray_off;
+    this.on_color = blue_on;
+    this.off_color = blue_off;
     this.radius = 5;
     // Note that index 0 corresponds to bit 0 (LSB)
     this.state = [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false];
