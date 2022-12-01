@@ -1036,16 +1036,6 @@ control_word = new ControlWord("Control", 16);
 display_out = new SevenSegmentDisplay("Display", 3);
 
 
-function randomize_register_bits ( reg ) {
-  for (let i=0; i<reg.length; i++) {
-    if (Math.random() > 0.5) {
-      reg[i][0] = 1;
-    } else {
-      reg[i][0] = 0;
-    }
-  }
-}
-
 var image = new Image();
 var image_loaded = false;
 
@@ -1058,7 +1048,9 @@ function update_canvas() {
     var ctxt = canvas.getContext('2d');
     var w = canvas.width = 640;
     var h = canvas.height = 546;
+
     if (image_loaded) {
+
       // Draw the background image
       ctxt.drawImage(image,0,0);
 
@@ -1124,6 +1116,7 @@ function setup_canvas() {
 
       update_canvas();
     };
+
     image.src = 'computer_background_640.png';
   }
 }
@@ -1152,37 +1145,37 @@ function mouse_down ( event ) {
   execute_button_list_down ( event );
 }
 
-stopRunning = false;
-function mainLoop()
+stop_running = false;
+function main_loop()
 {
-  if (mainLoop.bInMainLoop)
+  if (main_loop.in_main_loop)
     return;
 
-  mainLoop.bInMainLoop = true;
-  mainLoop.bStayInLoop = false;    // by default, release main loop
+  main_loop.in_main_loop = true;
+  main_loop.bStayInLoop = false;    // by default, release main loop
 
-  if (typeof mainLoop.nCounter == "undefined")
-    mainLoop.nCounter = 0;
+  if (typeof main_loop.main_loop_counter == "undefined")
+    main_loop.main_loop_counter = 0;
 
-  if (!stopRunning) {
+  if (!stop_running) {
    exec_next();
   }
 
-  ++mainLoop.nCounter;
+  ++main_loop.main_loop_counter;
 
-  mainLoop.bStayInLoop = true;
+  main_loop.bStayInLoop = true;
 
-  if (stopRunning)
-  mainLoop.bStayInLoop = false;
+  if (stop_running)
+  main_loop.bStayInLoop = false;
 
-  mainLoop.bInMainLoop = false;
+  main_loop.in_main_loop = false;
 
-  if (mainLoop.bStayInLoop) {
-    setTimeout ( "mainLoop()", clock.get_speed_ms() ); // Call mainLoop X ms from now
+  if (main_loop.bStayInLoop) {
+    setTimeout ( "main_loop()", clock.get_speed_ms() ); // Call main_loop X ms from now
   }
 
-  return mainLoop.bStayInLoop;
-} // mainLoop
+  return main_loop.bStayInLoop;
+} // main_loop
 
 running = false;
 run_counter = 1;
@@ -1195,14 +1188,14 @@ function run_stop() {
 	}
 }
 function run() {
-	stopRunning = false;
-	mainLoop.nCounter = 0;
-	mainLoop();
+	stop_running = false;
+	main_loop.main_loop_counter = 0;
+	main_loop();
 }
 function stop() {
 	running = false;
-	mainLoop.bStayInLoop = false;
-	stopRunning = true;
+	main_loop.bStayInLoop = false;
+	stop_running = true;
 }
 function step() {
 	if (running == false) {
@@ -1319,11 +1312,11 @@ function exec_next() {
 function cpu_reset() {
 	is_idle = false;
 	running = true;
-	stopRunning = true;
+	stop_running = true;
 	run_stop();
 	stop();
 	run_counter = 1;
-	mainLoop.nCounter = 0;
+	main_loop.main_loop_counter = 0;
 	ucode_ctr.reset();
 	update_canvas();
 }
