@@ -160,6 +160,11 @@ function change_example() {
     document.getElementById("Source Code").value =
       "0 LDI 1\n1 LDI 2\n2 LDI 3\n3 LDI 4\n4 LDI 5\n5 LDI 6\n6 LDI 7\n7 LDI 8\n" +
       "8 LDI F\n9 LDI E\nA LDI D\nB LDI C\nC LDI B\nD LDI A\nE LDI 9\nF LDI 0\n";
+  } else if (document.getElementById("examples").value == "Test JMP") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 LDI 1\n1 JMP 4\n2 LDI 8\n3 LDI 9\n4 LDI 2\n5 JMP 7\n6 LDI A\n7 LDI 3\n" +
+      "8 JMP F\n9 LDI B\nA LDI 4\nB JMP D\nC LDI C\nD LDI 5\nE JMP 0\nF JMP A\n";
   } else if (document.getElementById("examples").value == "Counter") {
     xmemory = [ // Count forever
     /* 0 */ 0x51,  // ldi 1   ; 1
@@ -1342,6 +1347,15 @@ function exec_next() {
           }
         } else if (operation == 0x06) { // "JMP " + operand );
           console.log ( "Executing JMP " + operand );
+          if (ucode_step == 2) {
+            // IO = Instruction Register Out
+            // J  = Jump
+            control_word.set_value ( IO | J );
+            bus.set_value ( inst_data.get_value() );
+            prog_ctr.set_value ( bus.get_value() );
+          } else {
+            control_word.set_value ( 0 );
+          }
         } else if (operation == 0x07) { // "JC  " + operand );
           console.log ( "Executing JC " + operand );
         } else if (operation == 0x08) { // "JZ  " + operand );
@@ -1558,6 +1572,7 @@ Source Code<br/>
 <option value="All Ops">All Ops</option>
 <option value="Test LDA">Test LDA</option>
 <option value="Test LDI">Test LDI</option>
+<option value="Test JMP">Test JMP</option>
 <option value="Counter">Counter</option>
 <option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
