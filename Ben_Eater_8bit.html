@@ -1282,7 +1282,7 @@ display_out = new SevenSegmentDisplay("Display", 3);
 */
 
 function console_log ( s ) {
-  // console.log ( s );
+  console.log ( s );
 }
 
 var count = 0;
@@ -1387,6 +1387,44 @@ function exec_next() {
           }
         } else if (operation == 0x03) { // "SUB " + operand );
           console_log ( "Executing SUB " + operand );
+          // HT MI RI RO IO II AI AO EO SU BI OI CE CO J FI
+          //  0  1  0  0  1  0  0  0  0  0  0  0  0  0 0  0
+          //  0  0  0  1  0  0  0  0  0  0  1  0  0  0 0  0
+          //  0  0  0  0  0  0  1  0  1  1  0  0  0  0 0  1
+          if (ucode_step == 2) {
+            // MI = Memory Address Register In
+            // IO = Instruction Register Out
+            console_log ( "Move InstData to MAR" );
+            control_word.set_value ( MI | IO );
+            bus.set_value ( inst_data.get_value() );
+            mem_addr.set_value ( bus.get_value() );
+          } else if (ucode_step == 3) {
+            // RO = RAM Out
+            // BI = B Register In
+            console_log ( "Move RAM to B" );
+            control_word.set_value ( RO | BI );
+            bus.set_value ( memory[mem_addr.get_value()] );
+            b_reg.set_value ( bus.get_value() );
+          } else if (ucode_step == 4) {
+            // AI = A Register In
+            // EO = Sum Out (E looks like sigma)
+            // FI = Flags In
+            // SU = Subtract Signal
+            console_log ( "Subtract put in A" );
+            control_word.set_value ( AI | EO | FI | SU );
+            let result = a_reg.get_value() - b_reg.get_value();
+            if (result < 0x00) {
+              carry_bit.set_value ( 1 );
+            } else {
+              carry_bit.set_value ( 0 );
+            }
+            result = result & 0xff;
+            sum_reg.set_value ( result );
+            bus.set_value ( result );
+            a_reg.set_value ( bus.get_value() );
+          } else {
+            control_word.set_value ( 0 );
+          }
         } else if (operation == 0x04) { // "STA " + operand );
           console_log ( "Executing STA " + operand );
           if (ucode_step == 2) {
