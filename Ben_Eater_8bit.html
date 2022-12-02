@@ -165,6 +165,11 @@ function change_example() {
     document.getElementById("Source Code").value =
       "0 LDI 1\n1 JMP 4\n2 LDI 8\n3 LDI 9\n4 LDI 2\n5 JMP 7\n6 LDI A\n7 LDI 3\n" +
       "8 JMP F\n9 LDI B\nA LDI 4\nB JMP D\nC LDI C\nD LDI 5\nE JMP 0\nF JMP A\n";
+  } else if (document.getElementById("examples").value == "Test OUT") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 LDI 1\n1 OUT\n2 LDI 2\n3 OUT\n4 LDI 3\n5 OUT\n6 LDI 4\n7 OUT\n" +
+      "8 LDI 5\n9 OUT\nA LDI 4\nB OUT\nC LDI 3\nD OUT\nE LDI 2\nF OUT\n";
   } else if (document.getElementById("examples").value == "Counter") {
     xmemory = [ // Count forever
     /* 0 */ 0x51,  // ldi 1   ; 1
@@ -1240,7 +1245,7 @@ const RO = 0b0001000000000000; // RAM Out
 const IO = 0b0000100000000000; // Instruction Register Out
 const II = 0b0000010000000000; // Instruction Register In
 const AI = 0b0000001000000000; // A Register In
-const AO = 0b0000000100000000; // A Regisert Out
+const AO = 0b0000000100000000; // A Register Out
 const EO = 0b0000000010000000; // Sum Out (E looks like sigma)
 const SU = 0b0000000001000000; // Subtract Signal
 const BI = 0b0000000000100000; // B Register In
@@ -1279,6 +1284,7 @@ function exec_next() {
 
   if (micromacro.down) {
     // Execucte micro instructions step by step
+    console.log ( "Micro" );
     ucode_ctr.update ( clock.get_state() );
     if (clock.get_state()) {
       let ucode_step = ucode_ctr.get_value();
@@ -1372,18 +1378,29 @@ function exec_next() {
           console.log ( "Executing ?D " + operand );
         } else if (operation == 0x0e) { // "OUT " + operand );
           console.log ( "Executing OUT " + operand );
+          if (ucode_step == 2) {
+            // AO = A Register Out
+            // OI = Output Register In
+            control_word.set_value ( AO | OI );
+            bus.set_value ( a_reg.get_value() );
+            display_out.set_value ( bus.get_value() );
+            display_out.set_digits ( String(bus.get_value()) );
+          } else {
+            control_word.set_value ( 0 );
+          }
         } else if (operation == 0x0f) { // "FX" Halt instruction ("HLT")
           console.log ( "Executing HLT " + operand );
+          control_word.set_value ( HT );
+          clock.stop();
+          stop();
         }
       }
-
-      // bus.set_value ( sum_reg.get_value() );
-      // bus.set_value ( a_reg.get_value() );
-      // sum_reg.set_value ( bus.get_value() );
     } else {
+      // This is the alternate half of the clock cycle
     }
   } else {
     // Execute macro instructions
+    console.log ( "Macro" );
     // Update the ucode counter
     ucode_ctr.update ( clock.get_state() );
 
@@ -1573,6 +1590,7 @@ Source Code<br/>
 <option value="Test LDA">Test LDA</option>
 <option value="Test LDI">Test LDI</option>
 <option value="Test JMP">Test JMP</option>
+<option value="Test OUT">Test OUT</option>
 <option value="Counter">Counter</option>
 <option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
