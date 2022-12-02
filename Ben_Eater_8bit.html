@@ -170,6 +170,11 @@ function change_example() {
     document.getElementById("Source Code").value =
       "0 LDI 1\n1 OUT\n2 LDI 2\n3 OUT\n4 LDI 3\n5 OUT\n6 LDI 4\n7 OUT\n" +
       "8 LDI 5\n9 OUT\nA LDI 4\nB OUT\nC LDI 3\nD OUT\nE LDI 2\nF OUT\n";
+  } else if (document.getElementById("examples").value == "Test STA") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 LDI A\n1 STA A\n2 STA B\n3 LDI C\n4 STA C\n5 STA D\n6 LDI E\n" +
+      "7 STA E\n8 STA F\n9 JMP 0\nA 0\nB 0\nC 0\nD 0\nE 0\nF 0";
   } else if (document.getElementById("examples").value == "Counter") {
     xmemory = [ // Count forever
     /* 0 */ 0x51,  // ldi 1   ; 1
@@ -1293,15 +1298,16 @@ function exec_next() {
         // Always fetch
         // MI = Memory Address Register In
         // CE = Program Counter Enabled
+        console.log ( "PC to MAR" );
         control_word.set_value ( MI | CE );
-        let pc = prog_ctr.get_value();
-        bus.set_value ( pc );
-        mem_addr.set_value ( pc );
+        bus.set_value ( prog_ctr.get_value() );
+        mem_addr.set_value ( bus.get_value() );
       } else if (ucode_step == 1) {
         // Always move from memory into the Instruction Register
         // RO = RAM Out
         // II = Instruction Register In
         // CE = Program Counter Enabled
+        console.log ( "RAM to Instruction Register" );
         control_word.set_value ( RO | II | CE );
         let ram = memory[mem_addr.get_value()];
         bus.set_value ( ram );
@@ -1312,7 +1318,7 @@ function exec_next() {
         // Look at the instruction and step
         let operation = inst_op.get_value();
         let operand = inst_data.get_value();
-        console.log ( "Instruction = " + operation.toString(16) + "" + operand.toString(16) );
+        console.log ( "uExecute " + operation.toString(16) + "" + operand.toString(16) );
         if (operation == 0x00)        { // "NOP " + operand );
           console.log ( "Executing NOP " + operand + " at step " + ucode_step );
           // Do nothing
@@ -1322,12 +1328,14 @@ function exec_next() {
           if (ucode_step == 2) {
             // MI = Memory Address Register In
             // IO = Instruction Register Out
+            console.log ( "Move InstData to MAR" );
             control_word.set_value ( MI | IO );
             bus.set_value ( inst_data.get_value() );
             mem_addr.set_value ( bus.get_value() );
           } else if (ucode_step == 3) {
             // RO = RAM Out
             // AI = A Register In
+            console.log ( "Move RAM to A" );
             control_word.set_value ( RO | AI );
             bus.set_value ( memory[mem_addr.get_value()] );
             a_reg.set_value ( bus.get_value() );
@@ -1340,11 +1348,29 @@ function exec_next() {
           console.log ( "Executing SUB " + operand );
         } else if (operation == 0x04) { // "STA " + operand );
           console.log ( "Executing STA " + operand );
+          if (ucode_step == 2) {
+            // MI = Memory Address Register In
+            // IO = Instruction Register Out
+            console.log ( "Move InstData to MAR" );
+            control_word.set_value ( MI | IO );
+            bus.set_value ( inst_data.get_value() );
+            mem_addr.set_value ( bus.get_value() );
+          } else if (ucode_step == 3) {
+            // RI = RAM In
+            // AO = A Register Out
+            console.log ( "Move A to RAM" );
+            control_word.set_value ( RI | AO );
+            bus.set_value ( a_reg.get_value() );
+            memory[mem_addr.get_value()] = bus.get_value();
+          } else {
+            control_word.set_value ( 0 );
+          }
         } else if (operation == 0x05) { // "LDI " + operand );
           console.log ( "Executing LDI " + operand );
           if (ucode_step == 2) {
             // IO = Instruction Register Out
             // AI = A Register In
+            console.log ( "Move InstData to A" );
             control_word.set_value ( IO | AI );
             bus.set_value ( inst_data.get_value() );
             a_reg.set_value ( bus.get_value() );
@@ -1356,6 +1382,7 @@ function exec_next() {
           if (ucode_step == 2) {
             // IO = Instruction Register Out
             // J  = Jump
+            console.log ( "Move InstData to PC" );
             control_word.set_value ( IO | J );
             bus.set_value ( inst_data.get_value() );
             prog_ctr.set_value ( bus.get_value() );
@@ -1390,6 +1417,7 @@ function exec_next() {
           }
         } else if (operation == 0x0f) { // "FX" Halt instruction ("HLT")
           console.log ( "Executing HLT " + operand );
+          console.log ( "Set HT bit in control word" );
           control_word.set_value ( HT );
           clock.stop();
           stop();
@@ -1591,6 +1619,7 @@ Source Code<br/>
 <option value="Test LDI">Test LDI</option>
 <option value="Test JMP">Test JMP</option>
 <option value="Test OUT">Test OUT</option>
+<option value="Test STA">Test STA</option>
 <option value="Counter">Counter</option>
 <option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
