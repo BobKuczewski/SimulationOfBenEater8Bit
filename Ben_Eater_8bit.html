@@ -1391,6 +1391,11 @@ function exec_next() {
             } else {
               carry_bit.set_value ( 0 );
             }
+            if (result == 0) {
+              zero_bit.set_value ( 1 );
+            } else {
+              zero_bit.set_value ( 0 );
+            }
             result = result & 0xff;
             sum_reg.set_value ( result );
             bus.set_value ( result );
@@ -1430,6 +1435,11 @@ function exec_next() {
               carry_bit.set_value ( 1 );
             } else {
               carry_bit.set_value ( 0 );
+            }
+            if (result == 0) {
+              zero_bit.set_value ( 1 );
+            } else {
+              zero_bit.set_value ( 0 );
             }
             result = result & 0xff;
             sum_reg.set_value ( result );
@@ -1483,8 +1493,48 @@ function exec_next() {
           }
         } else if (operation == 0x07) { // "JC  " + operand );
           console_log ( "Executing JC " + operand );
+          // HT MI RI RO IO II AI AO EO SU BI OI CE CO J FI
+          //  0  0  0  0  0  0  0  0  0  0  0  0  0  0 0  0
+          //  0  0  0  1  0  0  0  0  0  0  1  0  0  0 0  0
+          //  0  0  0  0  0  0  1  0  1  1  0  0  0  0 0  1
+          //  0  0  0  0  0  0  1  0  1  1  0  0  0  0 0  1
+          if (ucode_step == 2) {
+            // IO = Instruction Register Out
+            // J  = Jump
+            if (carry_bit.get_value() == 0) {
+              console_log ( "No Carry No Jump" );
+              control_word.set_value ( 0 );
+            } else {
+              console_log ( "Jump on Carry" );
+              control_word.set_value ( IO | J );
+              bus.set_value ( inst_data.get_value() );
+              prog_ctr.set_value ( bus.get_value() );
+            }
+          } else {
+            control_word.set_value ( 0 );
+          }
         } else if (operation == 0x08) { // "JZ  " + operand );
           console_log ( "Executing JZ " + operand );
+          // HT MI RI RO IO II AI AO EO SU BI OI CE CO J FI
+          //  0  0  0  0  0  0  0  0  0  0  0  0  0  0 0  0
+          //  0  0  0  1  0  0  0  0  0  0  1  0  0  0 0  0
+          //  0  0  0  0  0  0  1  0  1  1  0  0  0  0 0  1
+          //  0  0  0  0  0  0  1  0  1  1  0  0  0  0 0  1
+          if (ucode_step == 2) {
+            // IO = Instruction Register Out
+            // J  = Jump
+            if (zero_bit.get_value() == 0) {
+              console_log ( "No Zero No Jump" );
+              control_word.set_value ( 0 );
+            } else {
+              console_log ( "Jump on Zero" );
+              control_word.set_value ( IO | J );
+              bus.set_value ( inst_data.get_value() );
+              prog_ctr.set_value ( bus.get_value() );
+            }
+          } else {
+            control_word.set_value ( 0 );
+          }
         } else if (operation == 0x09) { // "?09 " + operand );
           console_log ( "Executing ?9 " + operand );
         } else if (operation == 0x0a) { // "?0A " + operand );
