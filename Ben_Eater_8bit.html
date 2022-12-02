@@ -1218,15 +1218,24 @@ function exec_next() {
   if (micromacro.down) {
     // Execucte micro instructions step by step
     ucode_ctr.update ( clock.get_state() );
-    let ucode_step = ucode_ctr.get_value();
-    console.log ( "ucode step: " + ucode_step );
-    if (ucode_step == 0) {
-      control_word.set_value ( 0b010000000000010 );
-    }
+    if (clock.get_state()) {
+      let ucode_step = ucode_ctr.get_value();
+      console.log ( "ucode step: " + ucode_step );
+      if (ucode_step == 0) {
+        // Always fetch
+        control_word.set_value ( 0b0100000000000100 );
+      } else if (ucode_step == 1) {
+        // Always fetch
+        control_word.set_value ( 0b0001010000001000 );
+      } else {
+        // Look at the instruction
+      }
 
-    bus.set_value ( sum_reg.get_value() );
-    bus.set_value ( a_reg.get_value() );
-    sum_reg.set_value ( bus.get_value() );
+      bus.set_value ( sum_reg.get_value() );
+      bus.set_value ( a_reg.get_value() );
+      sum_reg.set_value ( bus.get_value() );
+    } else {
+    }
   } else {
     // Execute macro instructions
     // Update the ucode counter
