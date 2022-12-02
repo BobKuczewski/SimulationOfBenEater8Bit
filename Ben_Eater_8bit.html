@@ -98,17 +98,22 @@ function assemble() {
   let asm = document.getElementById("Source Code").value;
   let asm_list = asm.trim().replaceAll('\r','\n').split('\n');
   let instr_list = [];
+  // Remove empty lines
   for (let i=0; i<asm_list.length; i++) {
     if (asm_list[i].trim().length > 0) {
       instr_list.push ( asm_list[i].trim() );
     }
   }
+  // Condense any multiple spaces down to a single space
   for (let i=0; i<instr_list.length; i++) {
     instr_list[i] = single_spaces ( instr_list[i] );
   }
+  // Begin generating the hex code
   let hex_code = "";
   for (let i=0; i<instr_list.length; i++) {
+    // Encode the instruction into an integer
     let opcode = encode ( instr_list[i] );
+    // Convert the integer into a 2 digit hex value
     hex_code = hex_code + hex2(opcode) + "\n";
   }
   document.getElementById("Hex Code").value = hex_code;
@@ -1033,15 +1038,17 @@ function decode ( instruction ) {
 
 function encode ( instruction ) {
   let digits = '0123456789ABCEDF';
-  let inst = instruction.replaceAll('    ',' ').replaceAll('   ',' ').replaceAll('  ',' ');
+  let inst = single_spaces ( instruction );
   inst = inst.toUpperCase().split(' ');
-  // console.log ( "assem " + inst );
-  if (digits.search(inst[0]) >= 0) {
-    // console.log ( "Found addr: " + inst[0] );
+  if (inst.length >= 2) {
+    // Legal since all must be at least 2 (or 3)
+    // console.log ( "assem " + inst );
+    // Check to see if the second operand is an instruction
     let legal   = ["NOP","LDA","ADD","SUB","STA","LDI","JMP","JC","JZ","OUT","HLT"];
     let opcodes = [ 0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60,0x70,0x80, 0xE0,0xf0 ];
     let index = legal.indexOf(inst[1]);
     if (index >= 0) {
+      // This is an op code with an optional parameter
       let opcode = opcodes[index];
       if (inst.length > 2) {
         // Append the parameter
@@ -1049,11 +1056,17 @@ function encode ( instruction ) {
       }
       // console.log ( "Op: " + opcode.toString(16).toUpperCase() );
       return ( opcode );
-    } else if (digits.search(inst[1]) >= 0) {
-      return ( digits.search(inst[1]) );
+    } else {
+      // This must be a stored number
+      if (digits.search(inst[1][0]) >= 0) {
+        // This is a number
+        return ( parseInt ( inst[1], 16 ) );
+      } else {
+        return ( -1 );
+      }
     }
   }
-  return ( -1 );
+  return ( -1 ); // Indicates an error
 }
 
 clock = new ClockModule("Clock", 1);
