@@ -150,12 +150,16 @@ function change_example() {
     document.getElementById("Source Code").value =
       "0 NOP 0\n1 LDA 1\n2 ADD 2\n3 SUB 3\n4 STA 4\n5 LDI 5\n6 JMP 6\n7 JC 7\n" +
       "8 JZ 8\nE OUT E\nF HLT F\n9 9 9\nA A A\nB B B\nC C C\nD D D\n";
-
   } else if (document.getElementById("examples").value == "Test LDA") {
     xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
     document.getElementById("Source Code").value =
       "0 LDA A\n1 LDA B\n2 LDA C\n3 LDA D\n4 LDA E\n5 LDA F\n6 LDA A\n" +
       "7 LDA B\n8 LDA C\n9 LDA D\nA 1\nB 2\nC 3\nD 4\nE 5\nF 6\n";
+  } else if (document.getElementById("examples").value == "Test LDI") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 LDI 1\n1 LDI 2\n2 LDI 3\n3 LDI 4\n4 LDI 5\n5 LDI 6\n6 LDI 7\n7 LDI 8\n" +
+      "8 LDI F\n9 LDI E\nA LDI D\nB LDI C\nC LDI B\nD LDI A\nE LDI 9\nF LDI 0\n";
   } else if (document.getElementById("examples").value == "Counter") {
     xmemory = [ // Count forever
     /* 0 */ 0x51,  // ldi 1   ; 1
@@ -1316,7 +1320,7 @@ function exec_next() {
             control_word.set_value ( RO | AI );
             bus.set_value ( memory[mem_addr.get_value()] );
             a_reg.set_value ( bus.get_value() );
-          } else if (ucode_step == 4) {
+          } else {
             control_word.set_value ( 0 );
           }
         } else if (operation == 0x02) { // "ADD " + operand );
@@ -1327,6 +1331,15 @@ function exec_next() {
           console.log ( "Executing STA " + operand );
         } else if (operation == 0x05) { // "LDI " + operand );
           console.log ( "Executing LDI " + operand );
+          if (ucode_step == 2) {
+            // IO = Instruction Register Out
+            // AI = A Register In
+            control_word.set_value ( IO | AI );
+            bus.set_value ( inst_data.get_value() );
+            a_reg.set_value ( bus.get_value() );
+          } else {
+            control_word.set_value ( 0 );
+          }
         } else if (operation == 0x06) { // "JMP " + operand );
           console.log ( "Executing JMP " + operand );
         } else if (operation == 0x07) { // "JC  " + operand );
@@ -1544,6 +1557,7 @@ Source Code<br/>
 <option value="All Legal">All Legal</option>
 <option value="All Ops">All Ops</option>
 <option value="Test LDA">Test LDA</option>
+<option value="Test LDI">Test LDI</option>
 <option value="Counter">Counter</option>
 <option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
