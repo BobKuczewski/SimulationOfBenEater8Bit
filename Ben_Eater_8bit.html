@@ -1281,6 +1281,10 @@ control_word = new ControlWord("Control", 16);
 display_out = new SevenSegmentDisplay("Display", 3);
 */
 
+function console_log ( s ) {
+  // console.log ( s );
+}
+
 var count = 0;
 function exec_next() {
 
@@ -1289,16 +1293,16 @@ function exec_next() {
 
   if (micromacro.down) {
     // Execucte micro instructions step by step
-    console.log ( "Micro" );
+    console_log ( "Micro" );
     ucode_ctr.update ( clock.get_state() );
     if (clock.get_state()) {
       let ucode_step = ucode_ctr.get_value();
-      console.log ( "ucode step: " + ucode_step );
+      console_log ( "ucode step: " + ucode_step );
       if (ucode_step == 0) {
         // Always fetch
         // MI = Memory Address Register In
         // CE = Program Counter Enabled
-        console.log ( "PC to MAR" );
+        console_log ( "PC to MAR" );
         control_word.set_value ( MI | CE );
         bus.set_value ( prog_ctr.get_value() );
         mem_addr.set_value ( bus.get_value() );
@@ -1307,7 +1311,7 @@ function exec_next() {
         // RO = RAM Out
         // II = Instruction Register In
         // CE = Program Counter Enabled
-        console.log ( "RAM to Instruction Register" );
+        console_log ( "RAM to Instruction Register" );
         control_word.set_value ( RO | II | CE );
         let ram = memory[mem_addr.get_value()];
         bus.set_value ( ram );
@@ -1318,24 +1322,24 @@ function exec_next() {
         // Look at the instruction and step
         let operation = inst_op.get_value();
         let operand = inst_data.get_value();
-        console.log ( "uExecute " + operation.toString(16) + "" + operand.toString(16) );
+        console_log ( "uExecute " + operation.toString(16) + "" + operand.toString(16) );
         if (operation == 0x00)        { // "NOP " + operand );
-          console.log ( "Executing NOP " + operand + " at step " + ucode_step );
+          console_log ( "Executing NOP " + operand + " at step " + ucode_step );
           // Do nothing
           control_word.set_value ( 0 );
         } else if (operation == 0x01) { // "LDA " + operand );
-          console.log ( "Executing LDA " + operand );
+          console_log ( "Executing LDA " + operand );
           if (ucode_step == 2) {
             // MI = Memory Address Register In
             // IO = Instruction Register Out
-            console.log ( "Move InstData to MAR" );
+            console_log ( "Move InstData to MAR" );
             control_word.set_value ( MI | IO );
             bus.set_value ( inst_data.get_value() );
             mem_addr.set_value ( bus.get_value() );
           } else if (ucode_step == 3) {
             // RO = RAM Out
             // AI = A Register In
-            console.log ( "Move RAM to A" );
+            console_log ( "Move RAM to A" );
             control_word.set_value ( RO | AI );
             bus.set_value ( memory[mem_addr.get_value()] );
             a_reg.set_value ( bus.get_value() );
@@ -1343,22 +1347,59 @@ function exec_next() {
             control_word.set_value ( 0 );
           }
         } else if (operation == 0x02) { // "ADD " + operand );
-          console.log ( "Executing ADD " + operand );
-        } else if (operation == 0x03) { // "SUB " + operand );
-          console.log ( "Executing SUB " + operand );
-        } else if (operation == 0x04) { // "STA " + operand );
-          console.log ( "Executing STA " + operand );
+          console_log ( "Executing ADD " + operand );
+          // HT MI RI RO IO II AI AO EO SU BI OI CE CO J FI
+          //  0  1  0  0  1  0  0  0  0  0  0  0  0  0 0  0
+          //  0  0  0  1  0  0  0  0  0  0  1  0  0  0 0  0
+          //  0  0  0  0  0  0  1  0  1  0  0  0  0  0 0  1
           if (ucode_step == 2) {
             // MI = Memory Address Register In
             // IO = Instruction Register Out
-            console.log ( "Move InstData to MAR" );
+            console_log ( "Move InstData to MAR" );
+            control_word.set_value ( MI | IO );
+            bus.set_value ( inst_data.get_value() );
+            mem_addr.set_value ( bus.get_value() );
+          } else if (ucode_step == 3) {
+            // RO = RAM Out
+            // BI = B Register In
+            console_log ( "Move RAM to B" );
+            control_word.set_value ( RO | BI );
+            bus.set_value ( memory[mem_addr.get_value()] );
+            b_reg.set_value ( bus.get_value() );
+          } else if (ucode_step == 4) {
+            // AI = A Register In
+            // EO = Sum Out (E looks like sigma)
+            // FI = Flags In
+            console_log ( "Add put in A" );
+            control_word.set_value ( AI | EO | FI );
+            let result = a_reg.get_value() + b_reg.get_value();
+            if (result > 0xff) {
+              carry_bit.set_value ( 1 );
+            } else {
+              carry_bit.set_value ( 0 );
+            }
+            result = result & 0xff;
+            sum_reg.set_value ( result );
+            bus.set_value ( result );
+            a_reg.set_value ( bus.get_value() );
+          } else {
+            control_word.set_value ( 0 );
+          }
+        } else if (operation == 0x03) { // "SUB " + operand );
+          console_log ( "Executing SUB " + operand );
+        } else if (operation == 0x04) { // "STA " + operand );
+          console_log ( "Executing STA " + operand );
+          if (ucode_step == 2) {
+            // MI = Memory Address Register In
+            // IO = Instruction Register Out
+            console_log ( "Move InstData to MAR" );
             control_word.set_value ( MI | IO );
             bus.set_value ( inst_data.get_value() );
             mem_addr.set_value ( bus.get_value() );
           } else if (ucode_step == 3) {
             // RI = RAM In
             // AO = A Register Out
-            console.log ( "Move A to RAM" );
+            console_log ( "Move A to RAM" );
             control_word.set_value ( RI | AO );
             bus.set_value ( a_reg.get_value() );
             memory[mem_addr.get_value()] = bus.get_value();
@@ -1366,11 +1407,11 @@ function exec_next() {
             control_word.set_value ( 0 );
           }
         } else if (operation == 0x05) { // "LDI " + operand );
-          console.log ( "Executing LDI " + operand );
+          console_log ( "Executing LDI " + operand );
           if (ucode_step == 2) {
             // IO = Instruction Register Out
             // AI = A Register In
-            console.log ( "Move InstData to A" );
+            console_log ( "Move InstData to A" );
             control_word.set_value ( IO | AI );
             bus.set_value ( inst_data.get_value() );
             a_reg.set_value ( bus.get_value() );
@@ -1378,11 +1419,11 @@ function exec_next() {
             control_word.set_value ( 0 );
           }
         } else if (operation == 0x06) { // "JMP " + operand );
-          console.log ( "Executing JMP " + operand );
+          console_log ( "Executing JMP " + operand );
           if (ucode_step == 2) {
             // IO = Instruction Register Out
             // J  = Jump
-            console.log ( "Move InstData to PC" );
+            console_log ( "Move InstData to PC" );
             control_word.set_value ( IO | J );
             bus.set_value ( inst_data.get_value() );
             prog_ctr.set_value ( bus.get_value() );
@@ -1390,34 +1431,35 @@ function exec_next() {
             control_word.set_value ( 0 );
           }
         } else if (operation == 0x07) { // "JC  " + operand );
-          console.log ( "Executing JC " + operand );
+          console_log ( "Executing JC " + operand );
         } else if (operation == 0x08) { // "JZ  " + operand );
-          console.log ( "Executing JZ " + operand );
+          console_log ( "Executing JZ " + operand );
         } else if (operation == 0x09) { // "?09 " + operand );
-          console.log ( "Executing ?9 " + operand );
+          console_log ( "Executing ?9 " + operand );
         } else if (operation == 0x0a) { // "?0A " + operand );
-          console.log ( "Executing ?A " + operand );
+          console_log ( "Executing ?A " + operand );
         } else if (operation == 0x0b) { // "?0B " + operand );
-          console.log ( "Executing ?B " + operand );
+          console_log ( "Executing ?B " + operand );
         } else if (operation == 0x0c) { // "?0C " + operand );
-          console.log ( "Executing ?C " + operand );
+          console_log ( "Executing ?C " + operand );
         } else if (operation == 0x0d) { // "?0D " + operand );
-          console.log ( "Executing ?D " + operand );
+          console_log ( "Executing ?D " + operand );
         } else if (operation == 0x0e) { // "OUT " + operand );
-          console.log ( "Executing OUT " + operand );
+          console_log ( "Executing OUT " + operand );
           if (ucode_step == 2) {
             // AO = A Register Out
             // OI = Output Register In
             control_word.set_value ( AO | OI );
             bus.set_value ( a_reg.get_value() );
             display_out.set_value ( bus.get_value() );
+            console.log ( "OUT: " + bus.get_value() );
             display_out.set_digits ( String(bus.get_value()) );
           } else {
             control_word.set_value ( 0 );
           }
         } else if (operation == 0x0f) { // "FX" Halt instruction ("HLT")
-          console.log ( "Executing HLT " + operand );
-          console.log ( "Set HT bit in control word" );
+          console_log ( "Executing HLT " + operand );
+          console_log ( "Set HT bit in control word" );
           control_word.set_value ( HT );
           clock.stop();
           stop();
