@@ -1035,6 +1035,8 @@ bus = new BusContents("Bus", 8);
 control_word = new ControlWord("Control", 16);
 display_out = new SevenSegmentDisplay("Display", 3);
 
+micromacro = new ToggleButton ("MicroMacro", 600, 30, 20, 20);
+button_list.push ( micromacro );
 
 var image = new Image();
 var image_loaded = false;
@@ -1210,96 +1212,103 @@ function exec_next() {
   // Toggle the clock
   clock.half_tick();
 
-  // Update the ucode counter
-  ucode_ctr.update ( clock.get_state() );
+  if (micromacro.down) {
+    // Execucte micro instructions
+    bus.set_value ( sum_reg.get_value() );
+    bus.set_value ( a_reg.get_value() );
+    sum_reg.set_value ( bus.get_value() );
+  } else {
+    // Execute macro instructions
+    // Update the ucode counter
+    ucode_ctr.update ( clock.get_state() );
 
+    if ( clock.get_state() && (ucode_ctr.get_state() == 3) ) {
+      // Execute the current instruction
+      let pc = prog_ctr.get_value();
+      if (consoleDebug) console.log ( "Execute " + hex2(memory[pc]) + " = " + decode(memory[pc]) );
 
-  if ( clock.get_state() && (ucode_ctr.get_state() == 3) ) {
-    // Execute the current instruction
-    let pc = prog_ctr.get_value();
-    if (consoleDebug) console.log ( "Execute " + hex2(memory[pc]) + " = " + decode(memory[pc]) );
+      mem_addr.set_value ( pc );
+      mem_data.set_value ( memory[pc] );
+      let lower = memory[pc] & 0x0f;
+      let upper = (memory[pc] >> 4) & 0x0f;
 
-    mem_addr.set_value ( pc );
-    mem_data.set_value ( memory[pc] );
-    let lower = memory[pc] & 0x0f;
-    let upper = (memory[pc] >> 4) & 0x0f;
+      inst_op.set_value ( upper );
+      inst_data.set_value ( lower );
 
-    inst_op.set_value ( upper );
-    inst_data.set_value ( lower );
-
-    if (upper == 0x00)        { // "NOP " + lower );
-      // Do nothing
-    } else if (upper == 0x01) { // "LDA " + lower );
-      mem_addr.set_value ( lower );
-      mem_data.set_value ( memory[lower] );
-      if (consoleDebug) console.log ( "  A = memory[" + lower + "] = " + memory[lower] );
-      let value = memory[lower];
-      a_reg.set_value ( value );
-      sum_reg.set_value ( (a_reg.get_value() + b_reg.get_value()) );
-    } else if (upper == 0x02) { // "ADD " + lower );
-      mem_addr.set_value ( lower );
-      mem_data.set_value ( memory[lower] );
-      if (consoleDebug) console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
-      let value = memory[lower];
-      b_reg.set_value ( value );
-      let result = a_reg.get_value() + b_reg.get_value();
-      if (result > 0xff) {
-        carry_bit.set_value ( 1 );
-      } else {
-        carry_bit.set_value ( 0 );
-      }
-      result = result & 0xff;
-      sum_reg.set_value ( result );
-      a_reg.set_value ( result );
-    } else if (upper == 0x03) { // "SUB " + lower );
-      mem_addr.set_value ( lower );
-      mem_data.set_value ( memory[lower] );
-      if (consoleDebug) console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
-      let value = memory[lower];
-      b_reg.set_value ( value );
-      sum_reg.set_value ( a_reg.get_value() - b_reg.get_value() );
-      a_reg.set_value ( sum_reg.get_value() );
-    } else if (upper == 0x04) { // "STA " + lower );
-      mem_addr.set_value ( lower );
-      mem_data.set_value ( memory[lower] );
-      memory[lower] = a_reg.get_value();
-      sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
-    } else if (upper == 0x05) { // "LDI " + lower );
-      if (consoleDebug) console.log ( "  A = " + lower );
-      a_reg.set_value ( lower );
-      sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
-    } else if (upper == 0x06) { // "JMP " + lower );
-      mem_addr.set_value ( lower );
-      if (consoleDebug) console.log ( "  JMP " + lower );
-      let value = memory[lower];
-      mem_data.set_value ( memory[lower] );
-      pc = lower - 1; // Jump before destination since pc will be incremented
-    } else if (upper == 0x07) { // "JC  " + lower );
-      if (carry_bit.get_value() != 0) {
+      if (upper == 0x00)        { // "NOP " + lower );
+        // Do nothing
+      } else if (upper == 0x01) { // "LDA " + lower );
         mem_addr.set_value ( lower );
         mem_data.set_value ( memory[lower] );
+        if (consoleDebug) console.log ( "  A = memory[" + lower + "] = " + memory[lower] );
         let value = memory[lower];
+        a_reg.set_value ( value );
+        sum_reg.set_value ( (a_reg.get_value() + b_reg.get_value()) );
+      } else if (upper == 0x02) { // "ADD " + lower );
+        mem_addr.set_value ( lower );
+        mem_data.set_value ( memory[lower] );
+        if (consoleDebug) console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
+        let value = memory[lower];
+        b_reg.set_value ( value );
+        let result = a_reg.get_value() + b_reg.get_value();
+        if (result > 0xff) {
+          carry_bit.set_value ( 1 );
+        } else {
+          carry_bit.set_value ( 0 );
+        }
+        result = result & 0xff;
+        sum_reg.set_value ( result );
+        a_reg.set_value ( result );
+      } else if (upper == 0x03) { // "SUB " + lower );
+        mem_addr.set_value ( lower );
+        mem_data.set_value ( memory[lower] );
+        if (consoleDebug) console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
+        let value = memory[lower];
+        b_reg.set_value ( value );
+        sum_reg.set_value ( a_reg.get_value() - b_reg.get_value() );
+        a_reg.set_value ( sum_reg.get_value() );
+      } else if (upper == 0x04) { // "STA " + lower );
+        mem_addr.set_value ( lower );
+        mem_data.set_value ( memory[lower] );
+        memory[lower] = a_reg.get_value();
+        sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
+      } else if (upper == 0x05) { // "LDI " + lower );
+        if (consoleDebug) console.log ( "  A = " + lower );
+        a_reg.set_value ( lower );
+        sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
+      } else if (upper == 0x06) { // "JMP " + lower );
+        mem_addr.set_value ( lower );
+        if (consoleDebug) console.log ( "  JMP " + lower );
+        let value = memory[lower];
+        mem_data.set_value ( memory[lower] );
         pc = lower - 1; // Jump before destination since pc will be incremented
+      } else if (upper == 0x07) { // "JC  " + lower );
+        if (carry_bit.get_value() != 0) {
+          mem_addr.set_value ( lower );
+          mem_data.set_value ( memory[lower] );
+          let value = memory[lower];
+          pc = lower - 1; // Jump before destination since pc will be incremented
+        }
+      } else if (upper == 0x08) { // "JZ  " + lower );
+      } else if (upper == 0x09) { // "?09 " + lower );
+      } else if (upper == 0x0a) { // "?0A " + lower );
+      } else if (upper == 0x0b) { // "?0B " + lower );
+      } else if (upper == 0x0c) { // "?0C " + lower );
+      } else if (upper == 0x0d) { // "?0D " + lower );
+      } else if (upper == 0x0e) { // "OUT " + lower );
+        // Display the A Register as output
+        console.log ( "Out = " + a_reg.get_value() );
+        display_out.set_digits ( String(a_reg.get_value()) );
+      } else if (upper == 0x0f) { // "FX" Halt instruction ("HLT")
+        clock.stop();
+        stop();
       }
-    } else if (upper == 0x08) { // "JZ  " + lower );
-    } else if (upper == 0x09) { // "?09 " + lower );
-    } else if (upper == 0x0a) { // "?0A " + lower );
-    } else if (upper == 0x0b) { // "?0B " + lower );
-    } else if (upper == 0x0c) { // "?0C " + lower );
-    } else if (upper == 0x0d) { // "?0D " + lower );
-    } else if (upper == 0x0e) { // "OUT " + lower );
-      // Display the A Register as output
-      console.log ( "Out = " + a_reg.get_value() );
-      display_out.set_digits ( String(a_reg.get_value()) );
-    } else if (upper == 0x0f) { // "FX" Halt instruction ("HLT")
-      clock.stop();
-      stop();
+      bus.randomize_bits();
+      control_word.randomize_bits();
+      // Increment the program counter as needed
+      pc = (pc + 1) % 16;
+      prog_ctr.set_value ( pc );
     }
-    bus.randomize_bits();
-    control_word.randomize_bits();
-    // Increment the program counter as needed
-    pc = (pc + 1) % 16;
-    prog_ctr.set_value ( pc );
   }
 
   // Update the canvas to cause a redraw of all changes
