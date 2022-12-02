@@ -144,12 +144,18 @@ function change_example() {
     xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
     document.getElementById("Source Code").value =
       "0 NOP 0\n1 LDA 1\n2 ADD 2\n3 SUB 3\n4 STA 4\n5 LDI 5\n6 JMP 6\n7 JC 7\n" +
-      "8 JZ 8\nE OUT E\nF HLT F\n9 9\nA A\nB B\nC C\nD D\n";
+      "8 JZ 8\n9 OUT E\nA HLT F\nB 9\nC A\nD B\nE C\nF D\n";
   } else if (document.getElementById("examples").value == "All Ops") {
     xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
     document.getElementById("Source Code").value =
       "0 NOP 0\n1 LDA 1\n2 ADD 2\n3 SUB 3\n4 STA 4\n5 LDI 5\n6 JMP 6\n7 JC 7\n" +
       "8 JZ 8\nE OUT E\nF HLT F\n9 9 9\nA A A\nB B B\nC C C\nD D D\n";
+
+  } else if (document.getElementById("examples").value == "Test LDA") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 LDA A\n1 LDA B\n2 LDA C\n3 LDA D\n4 LDA E\n5 LDA F\n6 LDA A\n" +
+      "7 LDA B\n8 LDA C\n9 LDA D\nA 1\nB 2\nC 3\nD 4\nE 5\nF 6\n";
   } else if (document.getElementById("examples").value == "Counter") {
     xmemory = [ // Count forever
     /* 0 */ 0x51,  // ldi 1   ; 1
@@ -1270,12 +1276,17 @@ function exec_next() {
       console.log ( "ucode step: " + ucode_step );
       if (ucode_step == 0) {
         // Always fetch
+        // MI = Memory Address Register In
+        // CE = Program Counter Enabled
         control_word.set_value ( MI | CE );
         let pc = prog_ctr.get_value();
         bus.set_value ( pc );
         mem_addr.set_value ( pc );
       } else if (ucode_step == 1) {
         // Always move from memory into the Instruction Register
+        // RO = RAM Out
+        // II = Instruction Register In
+        // CE = Program Counter Enabled
         control_word.set_value ( RO | II | CE );
         let ram = memory[mem_addr.get_value()];
         bus.set_value ( ram );
@@ -1288,10 +1299,26 @@ function exec_next() {
         let operand = inst_data.get_value();
         console.log ( "Instruction = " + operation.toString(16) + "" + operand.toString(16) );
         if (operation == 0x00)        { // "NOP " + operand );
-          console.log ( "Executing NOP " + operand );
+          console.log ( "Executing NOP " + operand + " at step " + ucode_step );
           // Do nothing
+          control_word.set_value ( 0 );
         } else if (operation == 0x01) { // "LDA " + operand );
           console.log ( "Executing LDA " + operand );
+          if (ucode_step == 2) {
+            // MI = Memory Address Register In
+            // IO = Instruction Register Out
+            control_word.set_value ( MI | IO );
+            bus.set_value ( inst_data.get_value() );
+            mem_addr.set_value ( bus.get_value() );
+          } else if (ucode_step == 3) {
+            // RO = RAM Out
+            // AI = A Register In
+            control_word.set_value ( RO | AI );
+            bus.set_value ( memory[mem_addr.get_value()] );
+            a_reg.set_value ( bus.get_value() );
+          } else if (ucode_step == 4) {
+            control_word.set_value ( 0 );
+          }
         } else if (operation == 0x02) { // "ADD " + operand );
           console.log ( "Executing ADD " + operand );
         } else if (operation == 0x03) { // "SUB " + operand );
@@ -1516,6 +1543,7 @@ Source Code<br/>
 <option value="No Ops">No Ops</option>
 <option value="All Legal">All Legal</option>
 <option value="All Ops">All Ops</option>
+<option value="Test LDA">Test LDA</option>
 <option value="Counter">Counter</option>
 <option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
