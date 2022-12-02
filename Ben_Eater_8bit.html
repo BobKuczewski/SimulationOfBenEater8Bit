@@ -140,6 +140,16 @@ function change_example() {
     ];
     document.getElementById("Source Code").value = "0 NOP\n0 NOP\n0 HLT\n";
     // document.getElementById("Hex Code").value = "00\n00\nff\n";
+  } else if (document.getElementById("examples").value == "All Legal") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 NOP 0\n1 LDA 1\n2 ADD 2\n3 SUB 3\n4 STA 4\n5 LDI 5\n6 JMP 6\n7 JC 7\n" +
+      "8 JZ 8\nE OUT E\nF HLT F\n9 9\nA A\nB B\nC C\nD D\n";
+  } else if (document.getElementById("examples").value == "All Ops") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 NOP 0\n1 LDA 1\n2 ADD 2\n3 SUB 3\n4 STA 4\n5 LDI 5\n6 JMP 6\n7 JC 7\n" +
+      "8 JZ 8\nE OUT E\nF HLT F\n9 9 9\nA A A\nB B B\nC C C\nD D D\n";
   } else if (document.getElementById("examples").value == "Counter") {
     xmemory = [ // Count forever
     /* 0 */ 0x51,  // ldi 1   ; 1
@@ -1208,6 +1218,43 @@ function step() {
 	}
 }
 
+const HT = 0b1000000000000000; // Halt
+const MI = 0b0100000000000000; // Memory Address Register In
+const RI = 0b0010000000000000; // RAM In
+const RO = 0b0001000000000000; // RAM Out
+const IO = 0b0000100000000000; // Instruction Register Out
+const II = 0b0000010000000000; // Instruction Register In
+const AI = 0b0000001000000000; // A Register In
+const AO = 0b0000000100000000; // A Regisert Out
+const EO = 0b0000000010000000; // Sum Out (E looks like sigma)
+const SU = 0b0000000001000000; // Subtract Signal
+const BI = 0b0000000000100000; // B Register In
+const OI = 0b0000000000010000; // Output Register In
+const CE = 0b0000000000001000; // Program Counter Enabled
+const CO = 0b0000000000000100; // Program Counter Out
+const J  = 0b0000000000000010; // Jump
+const FI = 0b0000000000000001; // Flags In???
+
+const micro_bit_names = ['HT','MI','RI','RO','IO','II','AI','AO','EO','SU','BI','OI','CE','CO','J'];
+
+/*
+clock = new ClockModule("Clock", 1);
+run_prog_mode = new RunProgMode ("Run Mode", 2);
+ucode_ctr = new uCodeCounter("uCode Counter", 3 );
+prog_ctr = new ProgramCounter("Program Counter", 4);
+mem_addr = new MemoryAddress("Memory Address", 4);
+mem_data = new MemoryData("Memory Data", 8);
+inst_op = new InstructionOperation("Instruction Op", 4);
+inst_data = new InstructionData("Instruction Data", 4);
+a_reg = new ARegister("Register A", 8);
+b_reg = new BRegister("Register B", 8);
+sum_reg = new SumRegister("Sum", 8);
+carry_bit = new CarryRegister("Carry", 1);
+zero_bit = new ZeroRegister("Zero", 1);
+bus = new BusContents("Bus", 8);
+control_word = new ControlWord("Control", 16);
+display_out = new SevenSegmentDisplay("Display", 3);
+*/
 
 var count = 0;
 function exec_next() {
@@ -1223,17 +1270,62 @@ function exec_next() {
       console.log ( "ucode step: " + ucode_step );
       if (ucode_step == 0) {
         // Always fetch
-        control_word.set_value ( 0b0100000000000100 );
+        control_word.set_value ( MI | CE );
+        let pc = prog_ctr.get_value();
+        bus.set_value ( pc );
+        mem_addr.set_value ( pc );
       } else if (ucode_step == 1) {
-        // Always fetch
-        control_word.set_value ( 0b0001010000001000 );
+        // Always move from memory into the Instruction Register
+        control_word.set_value ( RO | II | CE );
+        let ram = memory[mem_addr.get_value()];
+        bus.set_value ( ram );
+        inst_op.set_value ( (ram >> 4) & 0x0f );
+        inst_data.set_value ( ram & 0x0f );
+        prog_ctr.set_value ( (prog_ctr.get_value() + 1) % 16 );
       } else {
-        // Look at the instruction
+        // Look at the instruction and step
+        let operation = inst_op.get_value();
+        let operand = inst_data.get_value();
+        console.log ( "Instruction = " + operation.toString(16) + "" + operand.toString(16) );
+        if (operation == 0x00)        { // "NOP " + operand );
+          console.log ( "Executing NOP " + operand );
+          // Do nothing
+        } else if (operation == 0x01) { // "LDA " + operand );
+          console.log ( "Executing LDA " + operand );
+        } else if (operation == 0x02) { // "ADD " + operand );
+          console.log ( "Executing ADD " + operand );
+        } else if (operation == 0x03) { // "SUB " + operand );
+          console.log ( "Executing SUB " + operand );
+        } else if (operation == 0x04) { // "STA " + operand );
+          console.log ( "Executing STA " + operand );
+        } else if (operation == 0x05) { // "LDI " + operand );
+          console.log ( "Executing LDI " + operand );
+        } else if (operation == 0x06) { // "JMP " + operand );
+          console.log ( "Executing JMP " + operand );
+        } else if (operation == 0x07) { // "JC  " + operand );
+          console.log ( "Executing JC " + operand );
+        } else if (operation == 0x08) { // "JZ  " + operand );
+          console.log ( "Executing JZ " + operand );
+        } else if (operation == 0x09) { // "?09 " + operand );
+          console.log ( "Executing ?9 " + operand );
+        } else if (operation == 0x0a) { // "?0A " + operand );
+          console.log ( "Executing ?A " + operand );
+        } else if (operation == 0x0b) { // "?0B " + operand );
+          console.log ( "Executing ?B " + operand );
+        } else if (operation == 0x0c) { // "?0C " + operand );
+          console.log ( "Executing ?C " + operand );
+        } else if (operation == 0x0d) { // "?0D " + operand );
+          console.log ( "Executing ?D " + operand );
+        } else if (operation == 0x0e) { // "OUT " + operand );
+          console.log ( "Executing OUT " + operand );
+        } else if (operation == 0x0f) { // "FX" Halt instruction ("HLT")
+          console.log ( "Executing HLT " + operand );
+        }
       }
 
-      bus.set_value ( sum_reg.get_value() );
-      bus.set_value ( a_reg.get_value() );
-      sum_reg.set_value ( bus.get_value() );
+      // bus.set_value ( sum_reg.get_value() );
+      // bus.set_value ( a_reg.get_value() );
+      // sum_reg.set_value ( bus.get_value() );
     } else {
     }
   } else {
@@ -1422,6 +1514,8 @@ Source Code<br/>
 <select id="examples" onchange="change_example()">
 <option value="Examples">Examples</option>
 <option value="No Ops">No Ops</option>
+<option value="All Legal">All Legal</option>
+<option value="All Ops">All Ops</option>
 <option value="Counter">Counter</option>
 <option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
