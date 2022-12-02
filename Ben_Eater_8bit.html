@@ -1087,6 +1087,8 @@ control_word = new ControlWord("Control", 16);
 display_out = new SevenSegmentDisplay("Display", 3);
 
 micromacro = new ToggleButton ("MicroMacro", 600, 30, 20, 20);
+micromacro.up_color   = "#ff888840";
+micromacro.down_color = "#ff5555e0";
 button_list.push ( micromacro );
 
 var image = new Image();
@@ -1295,7 +1297,7 @@ display_out = new SevenSegmentDisplay("Display", 3);
 */
 
 function console_log ( s ) {
-  console.log ( s );
+  // console.log ( s );
 }
 
 var count = 0;
@@ -1304,7 +1306,7 @@ function exec_next() {
   // Toggle the clock
   clock.half_tick();
 
-  if (micromacro.down) {
+  if (! micromacro.down) {
     // Execucte micro instructions step by step
     console_log ( "Micro" );
     ucode_ctr.update ( clock.get_state() );
