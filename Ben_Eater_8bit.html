@@ -285,7 +285,7 @@ class Register {
   set_value ( value ) {
     // The register indexes are bit positions, so reverse
     // value = 1101  gives [ 1, 0, 1, 1 ]
-    value = value & 0xff;
+    value = value & ( (2 ** this.nbits) - 1 ); // Mask off any higher order bits
     this.state = [];
     let n = this.position.length;
     let bit = n-1;
@@ -641,6 +641,9 @@ class uCodeCounter extends Register {
     //                        [false,128,390] ];
   }
 
+  get_value() {
+    return ( this.state );
+  }
   reset() {
     for (let i=0; i<this.ucode_ctr_LEDs.length; i++) {
       this.ucode_ctr_LEDs[i][0] = false;
@@ -1213,7 +1216,14 @@ function exec_next() {
   clock.half_tick();
 
   if (micromacro.down) {
-    // Execucte micro instructions
+    // Execucte micro instructions step by step
+    ucode_ctr.update ( clock.get_state() );
+    let ucode_step = ucode_ctr.get_value();
+    console.log ( "ucode step: " + ucode_step );
+    if (ucode_step == 0) {
+      control_word.set_value ( 0b010000000000010 );
+    }
+
     bus.set_value ( sum_reg.get_value() );
     bus.set_value ( a_reg.get_value() );
     sum_reg.set_value ( bus.get_value() );
