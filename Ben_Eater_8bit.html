@@ -180,6 +180,11 @@ function change_example() {
     document.getElementById("Source Code").value =
       "0 LDI A\n1 STA A\n2 STA B\n3 LDI C\n4 STA C\n5 STA D\n6 LDI E\n" +
       "7 STA E\n8 STA F\n9 JMP 0\nA 0\nB 0\nC 0\nD 0\nE 0\nF 0";
+  } else if (document.getElementById("examples").value == "Mult 7x8") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 LDA E\n1 SUB C\n2 JC 6\n3 LDA D\n4 OUT\n5 HLT\n6 STA E\n7 LDA D\n" +
+      "8 ADD F\n9 STA D\nA JMP 0\nB 0\nC 1\nD 0\nE 7\nF 8\n"
   } else if (document.getElementById("examples").value == "Counter") {
     xmemory = [ // Count forever
     /* 0 */ 0x51,  // ldi 1   ; 1
@@ -1069,6 +1074,7 @@ function encode ( instruction ) {
   return ( -1 ); // Indicates an error
 }
 
+
 clock = new ClockModule("Clock", 1);
 run_prog_mode = new RunProgMode ("Run Mode", 2);
 ucode_ctr = new uCodeCounter("uCode Counter", 3 );
@@ -1277,24 +1283,6 @@ const FI = 0b0000000000000001; // Flags In???
 
 const micro_bit_names = ['HT','MI','RI','RO','IO','II','AI','AO','EO','SU','BI','OI','CE','CO','J'];
 
-/*
-clock = new ClockModule("Clock", 1);
-run_prog_mode = new RunProgMode ("Run Mode", 2);
-ucode_ctr = new uCodeCounter("uCode Counter", 3 );
-prog_ctr = new ProgramCounter("Program Counter", 4);
-mem_addr = new MemoryAddress("Memory Address", 4);
-mem_data = new MemoryData("Memory Data", 8);
-inst_op = new InstructionOperation("Instruction Op", 4);
-inst_data = new InstructionData("Instruction Data", 4);
-a_reg = new ARegister("Register A", 8);
-b_reg = new BRegister("Register B", 8);
-sum_reg = new SumRegister("Sum", 8);
-carry_bit = new CarryRegister("Carry", 1);
-zero_bit = new ZeroRegister("Zero", 1);
-bus = new BusContents("Bus", 8);
-control_word = new ControlWord("Control", 16);
-display_out = new SevenSegmentDisplay("Display", 3);
-*/
 
 function console_log ( s ) {
   // console.log ( s );
@@ -1768,6 +1756,8 @@ Source Code<br/>
 <option value="Counter">Counter</option>
 <option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
+<option value="Mult 7x8">Multiply 7x8</option>
+
 <!-- <option value="Multiply">Multiply: E x F</option> May not work yet -->
 </select>
 </center>
