@@ -1679,38 +1679,77 @@ function exec_next() {
 function processor_test() {
   // This function can test execution of instructions
   micromacro.down = false; // false tests microcode, true tests macrocode
-
-  control_word.set_value ( 0 );
-  clock.reset_button.reset();
-  memory[0] = 0x57; // LDI 7
-  memory[1] = 0xe0; // OUT
-  memory[2] = 0xf0; // HLT
-  for (let i=0; i<100; i++) {
-    // console.log ( "processor_test() at step " + i );
-    exec_next();
-    // console.log ( " after exec_next(), HLT = " + control_word.get_state(HT)[0] );
-    if (control_word.get_value(HT)[0]) {
+  failed = false;
+  for (let i=0; i<16; i++) {
+    console.log ( "LDI Test " + i );
+    // Set up the test case
+    control_word.set_value ( 0 );
+    clock.reset_button.reset();
+    memory[0] = 0x50 | i; // LDI i
+    memory[1] = 0xf0; // HLT
+    memory[2] = 0xf0; // HLT
+    // Run the processor until halted
+    for (let i=0; i<100; i++) {
+      exec_next();
+      if (control_word.get_value(HT)[0]) {
+        break;
+      }
+    }
+    // Verify the result
+    if (a_reg.get_value() != i) {
+      console.log ( "LDI Test expected A=" + i + ", but got A=" + a_reg.get_value() );
       break;
     }
   }
-  control_word.set_value ( 0 );
-  clock.reset_button.reset();
-  memory[0] = 0x53; // LDI 3
-  memory[1] = 0xe0; // OUT
-  memory[2] = 0xf0; // HLT
-  for (let i=0; i<100; i++) {
-    // console.log ( "processor_test() at step " + i );
-    exec_next();
-    // console.log ( " after exec_next(), HLT = " + control_word.get_state(HT)[0] );
-    if (control_word.get_value(HT)[0]) {
-      break;
+
+  for (let i=0; i<256; i++) {
+    for (let j=0; j<256; j++) {
+      console.log ( "ADD Test " + ((i*256)+j) );
+      // Set up the test case
+      control_word.set_value ( 0 );
+      clock.reset_button.reset();
+      memory[0] = 0x14; // LDA 4
+      memory[1] = 0x25; // ADD 5
+      memory[2] = 0xf0; // HLT
+      memory[3] = 0xf0; // HLT
+      memory[4] = 0x00 | i; // Value of i
+      memory[5] = 0x00 | j; // Value of j
+      // Run the processor until halted
+      for (let i=0; i<100; i++) {
+        exec_next();
+        if (control_word.get_value(HT)[0]) {
+          break;
+        }
+      }
+      // Verify the result
+      if (a_reg.get_value() != ((i+j)&0xff)) {
+        console.log ( "ADD Test (" + i + "+" + j + ") expected A=" + (i+j) + ", but got A=" + a_reg.get_value() );
+        failed = true;
+        break;
+      }
+      // Verify the carry bit
+      let expected_carry = 0;
+      if (i+j > 255) {
+        expected_carry = 1;
+      }
+      if (carry_bit.get_value() != expected_carry) {
+        console.log ( "ADD Test (" + i + "+" + j + ") expected C=" + expected_carry + ", but got C=" + carry_bit.get_value() );
+      }
+      // Verify the zero bit
+      let expected_zero = 0;
+      if (i+j == 0) {
+        expected_zero = 1;
+      }
+      if (zero_bit.get_value() != expected_zero) {
+        console.log ( "ADD Test (" + i + "+" + j + ") expected Z=" + expected_zero + ", but got Z=" + zero_bit.get_value() );
+      }
     }
+    if (failed) break;
   }
 }
 
 
 function cpu_reset() {
-  console.log ( "called cpu_reset" );
 	is_idle = false;
 	running = true;
 	stop_running = true;
@@ -1723,14 +1762,12 @@ function cpu_reset() {
 }
 
 function reset_and_run() {
-  console.log ( "called reset_and_run" );
   cpu_reset();
   clock.reset();
   clock.run();
 }
 
 function run_stop_callback() {
-  console.log ( "called run_stop_callback" );
 	running = !running;
 	if (running) {
 		document.getElementById('RunStop').innerHTML = "<u>Run</u>/Stop";
