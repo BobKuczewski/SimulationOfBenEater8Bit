@@ -565,16 +565,47 @@ class ResetButton extends Button { // reset_button
 }
 
 
+class SpeedButton extends Button { // clock_speed_button
+  constructor ( name, center_x, center_y, w, h, clock ) {
+    super ( name, center_x, center_y, w, h );
+    this.clock = clock;  // This is the clock module associated with this button
+  }
+  down_action ( event ) {
+    if (this.clock.clock_speed_index < this.clock.clock_speeds.length-1) {
+      this.clock.clock_speed_index += 1;
+    } else {
+      this.clock.clock_speed_index = 0;
+    }
+    this.down_color = this.clock.clock_speed_colors[this.clock.clock_speed_index];
+    this.up_color = this.clock.clock_speed_colors[this.clock.clock_speed_index];
+    console.log ( "New speed = " + this.clock.clock_speeds[this.clock.clock_speed_index] );
+    update_canvas();
+  }
+  up_action ( event ) {
+  }
+}
+
+
 class ClockModule { // extends Register {
 
   constructor (name,nbits) {
     // super(name,nbits);
+    this.clock_speeds       = [ 1000,        200,         2 ]; // Actually clock intervals: 1000ms, 200ms, 2ms
+    this.clock_speed_colors = [ "#0000ff44", "#00ff0044", "#ff000044" ];
+    this.clock_speed_index = 1;
+
     this.clock_run_stop_button = new ClockRunStopButton ( "Clock Run/Stop", 121, 29, 20, 20, this );
     button_list.push ( this.clock_run_stop_button );
+
     this.clock_step_button = new ClockStepButton ( "Clock Step", 69, 32, 20, 20, this );
     button_list.push ( this.clock_step_button );
+
     this.reset_button = new ResetButton ( "Reset", 32, 344, 20, 20, this );
     button_list.push ( this.reset_button );
+    this.speed_button = new SpeedButton ( "Clock Speed", 25+30,10, 20, 20, this );
+    this.speed_button.up_color   = this.clock_speed_colors[this.clock_speed_index];
+    this.speed_button.down_color = this.clock_speed_colors[this.clock_speed_index];
+    button_list.push ( this.speed_button );
 
     this.nbits = nbits;
     this.reg_name = name;
@@ -596,15 +627,10 @@ class ClockModule { // extends Register {
 
   reset() {
     this.state = false;
-    this.clock_speed_button = [ [2,25,16] ];
-    this.clock_speeds = [ 1000, 200, 2 ];
     this.on_color = blue_on;
     this.off_color = blue_off;
     this.position = [ 232, 6 ];
     this.radius = 5;
-
-    // console.log ( "Update Canvas" );
-    // update_canvas();
   }
 
   half_tick() {
@@ -620,7 +646,7 @@ class ClockModule { // extends Register {
   }
 
   get_speed_ms() {
-    return ( this.clock_speed_button[0][0] );
+    return ( this.clock_speeds[this.clock_speed_index] );
   }
 
   mouse_up ( event ) {
@@ -634,42 +660,9 @@ class ClockModule { // extends Register {
       stop();
     }
     update_canvas();
-
-    // This should be replaced with a real Button!!
-    if ( (event.clientX >= this.clock_speed_button[0][1]-10) && (event.clientX <= this.clock_speed_button[0][1]+10) ) {
-      if ( (event.clientY >= this.clock_speed_button[0][2]-10) && (event.clientY <= this.clock_speed_button[0][2]+10) ) {
-        // if (consoleDebug) console.log ( "toggle speed button pressed" );
-        for (let i=0; i<this.clock_speeds.length; i++) {
-          // if (consoleDebug) console.log ( "Checking speed " + i + ": " + this.clock_speeds[i] );
-          if (this.clock_speed_button[0][0] == this.clock_speeds[i]) {
-            // if (consoleDebug) console.log ( "toggle speed" );
-            if (i < (this.clock_speeds.length-1)) {
-              this.clock_speed_button[0][0] = this.clock_speeds[i+1];
-            } else {
-              this.clock_speed_button[0][0] = this.clock_speeds[0];
-            }
-            // if (consoleDebug) console.log ( "toggled speed to " + this.clock_speed_button[0][0] );
-            break;
-          }
-        }
-        update_canvas();
-      }
-    }
-
   }
 
   draw(ctxt) {
-    // Draw the "clock_speed_button"
-    ctxt.fillStyle = "#ffffff44";
-    if (this.clock_speed_button[0][0]>=1000) {
-      ctxt.fillStyle = "#0000ff44";
-    } else if (this.clock_speed_button[0][0]>=200) {
-      ctxt.fillStyle = "#00ff0044";
-    } else {
-      ctxt.fillStyle = "#ff000044";
-    }
-    ctxt.fillRect( this.clock_speed_button[0][1]-20, this.clock_speed_button[0][2]-20, 20,20);
-
     // Draw the Clock LED
     if (this.state) {
       ctxt.fillStyle = blue_on;
