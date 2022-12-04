@@ -534,6 +534,36 @@ class ClockRunStopButton extends ToggleButton { // clock_run_stop_button
   }
 }
 
+class ResetButton extends Button { // reset_button
+  constructor ( name, center_x, center_y, w, h, clock ) {
+    super ( name, center_x, center_y, w, h );
+    this.clock = clock;  // This is the clock module associated with this button
+  }
+  down_action ( event ) {
+    cpu_reset();
+    this.state = false;
+    clock.set_value(false);
+    ucode_ctr.set_value(0);
+    prog_ctr.set_value(0);
+    mem_addr.set_value(0);
+    mem_data.set_value(0);
+    inst_op.set_value(0);
+    inst_data.set_value(0);
+    a_reg.set_value(0);
+    b_reg.set_value(0);
+    sum_reg.set_value(0);
+    carry_bit.set_value(0);
+    zero_bit.set_value(0);
+    display_out.set_value(0);
+    bus.set_value(0);
+    display_out.set_digits ("0");
+    clock.clock_run_stop_button.down = false;
+    update_canvas();
+  }
+  up_action ( event ) {
+  }
+}
+
 
 class ClockModule { // extends Register {
 
@@ -543,7 +573,7 @@ class ClockModule { // extends Register {
     button_list.push ( this.clock_run_stop_button );
     this.clock_step_button = new ClockStepButton ( "Clock Step", 69, 32, 20, 20, this );
     button_list.push ( this.clock_step_button );
-    this.reset_button = new Button ( "Reset", 32+40,344, 20, 20, this );
+    this.reset_button = new ResetButton ( "Reset", 32, 344, 20, 20, this );
     button_list.push ( this.reset_button );
 
     this.nbits = nbits;
@@ -566,7 +596,6 @@ class ClockModule { // extends Register {
 
   reset() {
     this.state = false;
-    this.reset_button = [ [false,32,344] ];
     this.clock_speed_button = [ [2,25,16] ];
     this.clock_speeds = [ 1000, 200, 2 ];
     this.on_color = blue_on;
@@ -598,31 +627,6 @@ class ClockModule { // extends Register {
   }
 
   mouse_down ( event ) {
-    // This code should be replaced by a Button!!!
-    if ( (event.clientX >= this.reset_button[0][1]) && (event.clientX <= this.reset_button[0][1]+20) ) {
-      if ( (event.clientY >= this.reset_button[0][2]) && (event.clientY <= this.reset_button[0][2]+20) ) {
-        // if (consoleDebug) console.log ( "Reset down with " + event.clientX + ", " + event.clientY );
-        cpu_reset();
-        this.state = false;
-        clock.set_value(false);
-        ucode_ctr.set_value(0);
-        prog_ctr.set_value(0);
-        mem_addr.set_value(0);
-        mem_data.set_value(0);
-        inst_op.set_value(0);
-        inst_data.set_value(0);
-        a_reg.set_value(0);
-        b_reg.set_value(0);
-        sum_reg.set_value(0);
-        carry_bit.set_value(0);
-        zero_bit.set_value(0);
-        display_out.set_value(0);
-        bus.set_value(0);
-        display_out.set_digits ("0");
-        update_canvas();
-        return;
-      }
-    }
 
     if (this.clock_run_stop_button.down) {
       run();
@@ -631,7 +635,7 @@ class ClockModule { // extends Register {
     }
     update_canvas();
 
-
+    // This should be replaced with a real Button!!
     if ( (event.clientX >= this.clock_speed_button[0][1]-10) && (event.clientX <= this.clock_speed_button[0][1]+10) ) {
       if ( (event.clientY >= this.clock_speed_button[0][2]-10) && (event.clientY <= this.clock_speed_button[0][2]+10) ) {
         // if (consoleDebug) console.log ( "toggle speed button pressed" );
@@ -665,10 +669,6 @@ class ClockModule { // extends Register {
       ctxt.fillStyle = "#ff000044";
     }
     ctxt.fillRect( this.clock_speed_button[0][1]-20, this.clock_speed_button[0][2]-20, 20,20);
-
-    // Draw the Reset "reset_button" button
-    ctxt.fillStyle = "#ffffff88";
-    ctxt.fillRect( this.reset_button[0][1]-10, this.reset_button[0][2]-10, 20,20);
 
     // Draw the Clock LED
     if (this.state) {
