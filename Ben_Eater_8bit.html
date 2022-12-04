@@ -95,6 +95,13 @@ function load_hex() {
   update_canvas();
 }
 
+function zero_hex() {
+  let hex_code = "00\n00\n00\n00\n00\n00\n00\n00\n00\n00\n00\n00\n00\n00\n00\n00\n";
+  document.getElementById("Hex Code").value = hex_code;
+  update_canvas();
+}
+
+
 function assemble() {
   let asm = document.getElementById("Source Code").value;
   let asm_list = asm.trim().replaceAll('\r','\n').split('\n');
@@ -146,6 +153,10 @@ function change_example() {
     ];
     document.getElementById("Source Code").value = "0 NOP\n0 NOP\n0 HLT\n";
     // document.getElementById("Hex Code").value = "00\n00\nff\n";
+  } else if (document.getElementById("examples").value == "Line Nums") {
+    xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
+    document.getElementById("Source Code").value =
+      "0 \n1 \n2 \n3 \n4 \n5 \n6 \n7 \n8 \n9 \nA \nB \nC \nD \nE \nF \n";
   } else if (document.getElementById("examples").value == "All Legal") {
     xmemory = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
     document.getElementById("Source Code").value =
@@ -1900,6 +1911,7 @@ Processor<br/>
 Hex Code<br/>
 <button type="button" onclick="load_hex()">Load</button><br/>
 <textarea id="Hex Code" rows="20" cols="8"></textarea><br/>
+<button type="button" onclick="zero_hex()">Zero</button><br/>
 </center>
 </td>
 
@@ -1926,6 +1938,7 @@ Source Code<br/>
 <option value="Fibonacci">Fibonacci</option>
 <option value="Mult 7x8">Multiply 7x8</option>
 <option value="Mult 3x5">Multiply 3x5</option>
+<option value="Line Nums">Line Numbers</option>
 
 <!-- <option value="Multiply">Multiply: E x F</option> May not work yet -->
 </select>
