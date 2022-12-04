@@ -590,9 +590,9 @@ class ClockModule { // extends Register {
 
   constructor (name,nbits) {
     // super(name,nbits);
-    this.clock_speeds       = [ 1000,        200,         2 ]; // Actually clock intervals: 1000ms, 200ms, 2ms
-    this.clock_speed_colors = [ "#0000ff44", "#00ff0044", "#ff000044" ];
-    this.clock_speed_index = 1;
+    this.clock_speeds       = [ 1000,        100,         10,          1 ]; // Actually clock intervals in milliseconds
+    this.clock_speed_colors = [ "#0000ff44", "#00ff0044", "#dddd0044", "#ff000044" ];
+    this.clock_speed_index = this.clock_speeds.length-1;
 
     this.clock_run_stop_button = new ClockRunStopButton ( "Clock Run/Stop", 121, 29, 20, 20, this );
     button_list.push ( this.clock_run_stop_button );
