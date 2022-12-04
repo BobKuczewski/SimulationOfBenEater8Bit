@@ -122,7 +122,9 @@ function assemble() {
     // Encode the instruction into an integer
     let opcode = encode ( instr_list[i] );
     // Convert the integer into a 2 digit hex value
-    hex_code = hex_code + hex2(opcode) + "\n";
+    if (opcode >= 0) {
+      hex_code = hex_code + hex2(opcode) + "\n";
+    }
   }
   document.getElementById("Hex Code").value = hex_code;
 }
