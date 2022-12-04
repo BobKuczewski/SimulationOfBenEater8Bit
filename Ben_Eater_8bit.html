@@ -543,6 +543,9 @@ class ClockModule { // extends Register {
     button_list.push ( this.clock_run_stop_button );
     this.clock_step_button = new ClockStepButton ( "Clock Step", 69, 32, 20, 20, this );
     button_list.push ( this.clock_step_button );
+    this.reset_button = new Button ( "Reset", 32+40,344, 20, 20, this );
+    button_list.push ( this.reset_button );
+
     this.nbits = nbits;
     this.reg_name = name;
     this.state = false;
@@ -595,6 +598,7 @@ class ClockModule { // extends Register {
   }
 
   mouse_down ( event ) {
+    // This code should be replaced by a Button!!!
     if ( (event.clientX >= this.reset_button[0][1]) && (event.clientX <= this.reset_button[0][1]+20) ) {
       if ( (event.clientY >= this.reset_button[0][2]) && (event.clientY <= this.reset_button[0][2]+20) ) {
         // if (consoleDebug) console.log ( "Reset down with " + event.clientX + ", " + event.clientY );
@@ -1670,7 +1674,20 @@ function exec_next() {
 	count = count + 1;
 }
 
+function test_exec_next() {
+  // This function will test
+  micromacro.down = false; // false tests microcode, true tests macrocode
+  memory[0] = 0x57; // LDI 7
+  memory[1] = 0xe0; // OUT
+  memory[2] = 0xf0; // HLT
+  for (let i=0; i<100; i++) {
+    exec_next();
+  }
+}
+
+
 function cpu_reset() {
+  console.log ( "called cpu_reset" );
 	is_idle = false;
 	running = true;
 	stop_running = true;
@@ -1683,12 +1700,14 @@ function cpu_reset() {
 }
 
 function reset_and_run() {
+  console.log ( "called reset_and_run" );
   cpu_reset();
   clock.reset();
   clock.run();
 }
 
 function run_stop_callback() {
+  console.log ( "called run_stop_callback" );
 	running = !running;
 	if (running) {
 		document.getElementById('RunStop').innerHTML = "<u>Run</u>/Stop";
