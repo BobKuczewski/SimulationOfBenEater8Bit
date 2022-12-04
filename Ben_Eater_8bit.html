@@ -1830,10 +1830,11 @@ function cpu_reset() {
 	update_canvas();
 }
 
-function reset_and_run() {
-  cpu_reset();
-  clock.reset();
-  clock.run();
+function reset_callback() {
+  clock.reset_button.reset();
+	document.getElementById('RunStop').innerHTML = "Run/<u>Stop</u>";
+	document.getElementById('RunStop').setAttribute("style", "background-color: #99FF99;");
+	running = false;
 }
 
 function run_stop_callback() {
@@ -1871,7 +1872,7 @@ setup_canvas();
 <center>
 Processor<br/>
 <button type="button" onclick="run_stop_callback();" id="RunStop" style="background-color: #99FF99;">Run/<u>Stop</u></button>
-<button type="button" onclick="reset_and_run()">Reset</button>
+<button type="button" onclick="reset_callback();">Reset</button>
 
 </center>
 <!-- <pre>-----------------</pre> -->
