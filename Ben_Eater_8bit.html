@@ -262,7 +262,7 @@ function change_example() {
   } else if (document.getElementById("examples").value == "CountUpDown") {
     document.getElementById("Source Code").value =
       "0 out\n1 add f\n2 jc 4\n3 jmp 0\n4 sub f\n5 out\n6 jz 0\n7 jmp 4\n" +
-      "8 0\n9 0\na 0\nb 0\nc 0\nd 0\ne 0\nf 1\n";
+      "8 0\n9 0\na 0\nb 0\nc 0\nd 0\ne 0\nf 5\n";
   } else if (document.getElementById("examples").value == "Add 14+28") {
     // 0 lda 4; 1 add 5; 2 out; 3 hlt; 4 0e; 5 1c;
     document.getElementById("Source Code").value =
@@ -548,6 +548,7 @@ class ResetButton extends Button { // reset_button
     this.state = false;
     clock.set_value(false);
     ucode_ctr.set_value(0);
+    ucode_ctr.last_pc = 0;
     prog_ctr.set_value(0);
     mem_addr.set_value(0);
     mem_data.set_value(0);
@@ -1898,7 +1899,7 @@ Processor<br/>
 <center>
 Hex Code<br/>
 <button type="button" onclick="load_hex()">Load</button><br/>
-<textarea id="Hex Code" rows="20" cols="12"></textarea><br/>
+<textarea id="Hex Code" rows="20" cols="8"></textarea><br/>
 </center>
 </td>
 
@@ -1920,7 +1921,7 @@ Source Code<br/>
 <option value="Test OUT">Test OUT</option>
 <option value="Test STA">Test STA</option>
 <option value="Counter">Counter</option>
-<option value="CountUpDown">Count Up/Dn</option>
+<option value="CountUpDown">Count U/D</option>
 <option value="Add Halt">Add Halt</option>
 <option value="Fibonacci">Fibonacci</option>
 <option value="Mult 7x8">Multiply 7x8</option>
