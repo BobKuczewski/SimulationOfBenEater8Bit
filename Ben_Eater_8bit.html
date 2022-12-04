@@ -61,7 +61,8 @@ function display_status() {
   txt = " Memory:\n";
   for (let i=0; i<memory.length; i++) {
     let p = "";
-    if (i == npc) {
+    // if (i == npc) {
+    if (i == ucode_ctr.last_pc) {
       p = " <<---";
     }
     txt = txt + "  " + hex1(i) + " " + hex2(memory[i]) + p + "\n";
@@ -698,6 +699,7 @@ class uCodeCounter extends Register {
                               [true,120,390] ];
     //                        [false,124,390],
     //                        [false,128,390] ];
+    this.last_pc = 0;
   }
 
   get_value() {
@@ -749,6 +751,11 @@ class uCodeCounter extends Register {
     this.ucode_state_LEDs[4][0] = true;
     this.ucode_state_LEDs[5][0] = true;
     this.ucode_state_LEDs[this.state][0] = false;
+
+    if (this.state == 0) {
+      // Store the last PC (mostly used for display)
+      this.last_pc = prog_ctr.get_value();
+    }
 
     // console.log ( "this.state before pc = " + this.state );
     return ( this.state );
