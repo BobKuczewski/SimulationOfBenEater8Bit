@@ -526,11 +526,9 @@ class ClockRunStopButton extends ToggleButton { // clock_run_stop_button
   }
   down_action ( event ) {
     clock.mouse_down(event);
-    // update_canvas();
   }
   up_action ( event ) {
     clock.mouse_up(event);
-    // update_canvas();
   }
 }
 
@@ -590,8 +588,8 @@ class ClockModule { // extends Register {
 
   constructor (name,nbits) {
     // super(name,nbits);
-    this.clock_speeds       = [ 1000,        100,         10,          1 ]; // Actually clock intervals in milliseconds
-    this.clock_speed_colors = [ "#0000ff44", "#00ff0044", "#dddd0044", "#ff000044" ];
+    this.clock_speeds       = [ 1000,        100,         10,          1          ] //, 0 ]; // Actually clock intervals in milliseconds
+    this.clock_speed_colors = [ "#0000ff44", "#00ff0044", "#dddd0044", "#ff000044"] //, "#ff4444", ];
     this.clock_speed_index = this.clock_speeds.length-1;
 
     this.clock_run_stop_button = new ClockRunStopButton ( "Clock Run/Stop", 121, 29, 20, 20, this );
@@ -602,6 +600,7 @@ class ClockModule { // extends Register {
 
     this.reset_button = new ResetButton ( "Reset", 32, 344, 20, 20, this );
     button_list.push ( this.reset_button );
+
     this.speed_button = new SpeedButton ( "Clock Speed", 25+30,10, 20, 20, this );
     this.speed_button.up_color   = this.clock_speed_colors[this.clock_speed_index];
     this.speed_button.down_color = this.clock_speed_colors[this.clock_speed_index];
@@ -650,10 +649,11 @@ class ClockModule { // extends Register {
   }
 
   mouse_up ( event ) {
+    // console.log ( "Clock.mouse_up()" );
   }
 
   mouse_down ( event ) {
-
+    // console.log ( "Clock.mouse_down()" );
     if (this.clock_run_stop_button.down) {
       run();
     } else {
@@ -1198,17 +1198,16 @@ function draw_canvas() {
     image.onload = function () {
         ctxt.drawImage(image,5,5);
     };
-
   }
 }
 
 function mouse_up ( event ) {
-  clock.mouse_up ( event );
+  // clock.mouse_up ( event );
   execute_button_list_up ( event );
 }
 
 function mouse_down ( event ) {
-  clock.mouse_down ( event );
+  // clock.mouse_down ( event );
   execute_button_list_down ( event );
 }
 
@@ -1225,10 +1224,17 @@ function main_loop()
     main_loop.main_loop_counter = 0;
 
   if (!stop_running) {
-   exec_next();
+    if (clock.clock_speeds == 0) {
+      // Execute multiple instructions for extra speed
+      for (let i=0; i<5; i++) {
+        exec_next();
+      }
+    } else {
+      exec_next();
+    }
   }
 
-  ++main_loop.main_loop_counter;
+  main_loop.main_loop_counter += 1;
 
   main_loop.bStayInLoop = true;
 
