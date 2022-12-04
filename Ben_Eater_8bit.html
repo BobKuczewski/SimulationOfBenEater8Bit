@@ -262,6 +262,11 @@ function change_example() {
     document.getElementById("Source Code").value =
       "0 out\n1 add f\n2 jc 4\n3 jmp 0\n4 sub f\n5 out\n6 jz 0\n7 jmp 4\n" +
       "8 0\n9 0\na 0\nb 0\nc 0\nd 0\ne 0\nf 1\n";
+  } else if (document.getElementById("examples").value == "Add 14+28") {
+    // 0 lda 4; 1 add 5; 2 out; 3 hlt; 4 0e; 5 1c;
+    document.getElementById("Source Code").value =
+      "0 lda 4\n1 add 5\n2 out\n3 hlt\n4 0e\n5 1c\n6 0\n7 0\n" +
+      "8 0\n9 0\na 0\nb 0\nc 0\nd 0\ne 0\nf 1\n";
   } else if (document.getElementById("examples").value == "Mult 3x5") {
     document.getElementById("Source Code").value =
       "0 lda e\n1 sub c\n2 jc 6\n3 lda d\n4 out\n5 hlt\n6 sta e\n7 lda d\n" +
@@ -1833,6 +1838,7 @@ Source Code<br/>
 <br/>
 <select id="examples" onchange="change_example()">
 <option value="Examples">Examples</option>
+<option value="Add 14+28">Add 14+28</option>
 <option value="No Ops">No Ops</option>
 <option value="All Legal">All Legal</option>
 <option value="All Ops">All Ops</option>
