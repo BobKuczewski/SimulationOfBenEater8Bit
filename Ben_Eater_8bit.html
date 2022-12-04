@@ -537,7 +537,7 @@ class ResetButton extends Button { // reset_button
     super ( name, center_x, center_y, w, h );
     this.clock = clock;  // This is the clock module associated with this button
   }
-  down_action ( event ) {
+  reset() {
     cpu_reset();
     this.state = false;
     clock.set_value(false);
@@ -557,6 +557,9 @@ class ResetButton extends Button { // reset_button
     display_out.set_digits ("0");
     clock.clock_run_stop_button.down = false;
     update_canvas();
+  }
+  down_action ( event ) {
+    this.reset();
   }
   up_action ( event ) {
   }
@@ -1673,14 +1676,35 @@ function exec_next() {
 	count = count + 1;
 }
 
-function test_exec_next() {
-  // This function will test
+function processor_test() {
+  // This function can test execution of instructions
   micromacro.down = false; // false tests microcode, true tests macrocode
+
+  control_word.set_value ( 0 );
+  clock.reset_button.reset();
   memory[0] = 0x57; // LDI 7
   memory[1] = 0xe0; // OUT
   memory[2] = 0xf0; // HLT
   for (let i=0; i<100; i++) {
+    // console.log ( "processor_test() at step " + i );
     exec_next();
+    // console.log ( " after exec_next(), HLT = " + control_word.get_state(HT)[0] );
+    if (control_word.get_value(HT)[0]) {
+      break;
+    }
+  }
+  control_word.set_value ( 0 );
+  clock.reset_button.reset();
+  memory[0] = 0x53; // LDI 3
+  memory[1] = 0xe0; // OUT
+  memory[2] = 0xf0; // HLT
+  for (let i=0; i<100; i++) {
+    // console.log ( "processor_test() at step " + i );
+    exec_next();
+    // console.log ( " after exec_next(), HLT = " + control_word.get_state(HT)[0] );
+    if (control_word.get_value(HT)[0]) {
+      break;
+    }
   }
 }
 
