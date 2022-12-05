@@ -515,9 +515,9 @@ class ClockModule { // extends Register {
   }
 
   stop() {
-    stop();
     this.clock_run_stop_button.down = false;
     this.state = false;
+    stop();
   }
 
   reset() {
@@ -1217,7 +1217,7 @@ function main_loop()
   }
 
   return main_loop.bStayInLoop;
-} // main_loop
+}
 
 running = false;
 run_counter = 1;
@@ -1230,11 +1230,19 @@ function run_stop() {
 	}
 }
 function run() {
+  // Update the global buttons
+  document.getElementById('RunStop').innerHTML = "<u>Run</u>/Stop";
+	document.getElementById('RunStop').setAttribute("style", "background-color: #FF9999;");
+  // Perform the run
 	stop_running = false;
 	main_loop.main_loop_counter = 0;
 	main_loop();
 }
 function stop() {
+  // Update the global buttons
+	document.getElementById('RunStop').innerHTML = "Run/<u>Stop</u>";
+	document.getElementById('RunStop').setAttribute("style", "background-color: #99FF99;");
+  // Perform the stop
 	running = false;
 	main_loop.bStayInLoop = false;
 	stop_running = true;
@@ -1815,12 +1823,15 @@ function run_stop_callback() {
 	if (running) {
 		document.getElementById('RunStop').innerHTML = "<u>Run</u>/Stop";
 		document.getElementById('RunStop').setAttribute("style", "background-color: #FF9999;");
+		clock.run();
 		run();
 	} else {
 		document.getElementById('RunStop').innerHTML = "Run/<u>Stop</u>";
 		document.getElementById('RunStop').setAttribute("style", "background-color: #99FF99;");
+		clock.stop();
 		stop();
 	}
+	update_canvas();
 }
 
 window.onload = setup_canvas;
