@@ -963,6 +963,44 @@ class SevenSegmentDisplay extends Register {
 }
 
 
+class ExecModeButton extends ToggleButton {
+  constructor ( name, center_x, center_y, w, h ) {
+    super ( name, center_x, center_y, w, h );
+    this.mode_names  = [  "macro",  "micro1",  "micro2"];
+    this.mode_colors = ["#ff0000", "#00ff00", "#0000ff"];
+    this.mode_index  = 1; // micro1
+    this.down_color  = this.mode_colors[this.mode_index];
+    this.up_color    = this.mode_colors[this.mode_index];
+  }
+  set_mode ( mode_name ) {
+    let i = this.mode_names.indexOf(mode_name);
+    if (i >= 0) {
+      this.mode_index = i;
+    }
+    return ( i );
+  }
+  get_value() {
+    return ( this.mode_index );
+  }
+  get_mode_name() {
+    return ( this.mode_names[this.mode_index] );
+  }
+  mouse_down ( event ) {
+    console.log ( "Exec Mode change from " + this.mode_index );
+    if (this.event_in_button(event)) {
+      this.down = !this.down;
+      this.mode_index += 1;
+      if (this.mode_index >= this.mode_colors.length) {
+        this.mode_index = 0;
+      }
+      this.down_color  = this.mode_colors[this.mode_index];
+      this.up_color    = this.mode_colors[this.mode_index];
+      update_canvas();
+    }
+  }
+}
+
+
 function decode ( instruction ) {
   let out = "";
   let lower = instruction & 0x0f;
@@ -1067,12 +1105,10 @@ button_list.push ( data_in_DIP_1 );
 data_in_DIP_0 = new DIPSwitch ( "DIP_D0", 109,268, 3,7, null );
 button_list.push ( data_in_DIP_0 );
 
-// This allows toggling between microcode and macrocode.
-// However, the macrocode is not currently being maintained.
-micromacro = new ToggleButton ("MicroMacro", 600, 30, 20, 20);
-micromacro.up_color   = "#ff888840";
-micromacro.down_color = "#ff5555e0";
-button_list.push ( micromacro );
+// This allows toggling between various microcode and macrocode modes.
+execution_mode = new ExecModeButton ("Execution Mode", 600, 30, 20, 20);
+// Comment out this instruction to hide the execution_mode button
+button_list.push ( execution_mode );
 
 var image = new Image();
 var image_loaded = false;
@@ -1280,12 +1316,24 @@ function console_log ( s ) {
 var count = 0;
 function exec_next() {
 
+  /* Bus:
+       Have the bus include an "in use" (iu) bit.
+       At the beginning of a microinstruction (ui), the "iu" bit is cleared.
+       Every time anything is written to the bus, the "iu" bit is checked.
+       If the "iu" bit was set before writing, then bus contention exists.
+       If the "iu" bit wasn't set, then it is set upon writing.
+       The order of register changes within a single "ui" should not matter.
+  */
+
   // Toggle the clock
   clock.half_tick();
 
-  if (! micromacro.down) {
+  if (execution_mode.get_mode_name() == "micro2") {
+    console.log ( "micro2" + " mode" );
+    console.log ( "micro2 not implemented yet" );
+  } else if (execution_mode.get_mode_name() == "micro1") {
     // Execucte micro instructions step by step
-    console_log ( "Micro" );
+    console.log ( "micro1" + " mode" );
     ucode_ctr.update ( clock.get_state() );
     if (clock.get_state()) {
       let ucode_step = ucode_ctr.get_value();
@@ -1551,7 +1599,10 @@ function exec_next() {
     } else {
       // This is the alternate half of the clock cycle
     }
-  } else {
+
+  } else if (execution_mode.get_mode_name() == "macro") {
+    console.log ( "macro" + " mode" );
+
     // Execute macro instructions
 
     // Update the ucode counter
@@ -1670,7 +1721,7 @@ function exec_next() {
 
 function LDI_test_passed(x) {
   // Verify the correct results from LDI x
-  micromacro.down = false; // false tests microcode, true tests macrocode
+  execution_mode.set_mode ( "micro1" );
   // Set up the test case
   control_word.set_value ( 0 );
   clock.reset_button.reset();
@@ -1695,7 +1746,7 @@ function LDI_test_passed(x) {
 
 function ADD_test_passed(i,j) {
   // Verify the correct results from i+j
-  micromacro.down = false; // false tests microcode, true tests macrocode
+  execution_mode.set_mode ( "micro1" );
   // Set up the test case
   control_word.set_value ( 0 );
   clock.reset_button.reset();
@@ -1740,7 +1791,7 @@ function ADD_test_passed(i,j) {
 
 function processor_test() {
   // This function can test execution of instructions
-  micromacro.down = false; // false tests microcode, true tests macrocode
+  execution_mode.set_mode ( "micro1" );
   let passed = false;
 
   // Run LDI tests:
