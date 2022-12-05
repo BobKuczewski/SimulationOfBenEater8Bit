@@ -137,7 +137,7 @@ function change_example() {
   } else if (document.getElementById("examples").value == "Line Nums") {
     document.getElementById("Source Code").value =
       "0 \n1 \n2 \n3 \n4 \n5 \n6 \n7 \n8 \n9 \nA \nB \nC \nD \nE \nF \n";
-  } else if (document.getElementById("examples").value == "All Legal") {
+  /* } else if (document.getElementById("examples").value == "All Legal") {
     document.getElementById("Source Code").value =
       "0 NOP 0\n1 LDA 1\n2 ADD 2\n3 SUB 3\n4 STA 4\n5 LDI 5\n6 JMP 6\n7 JC 7\n" +
       "8 JZ 8\n9 OUT E\nA HLT F\nB 9\nC A\nD B\nE C\nF D\n";
@@ -164,7 +164,7 @@ function change_example() {
   } else if (document.getElementById("examples").value == "Test STA") {
     document.getElementById("Source Code").value =
       "0 LDI A\n1 STA A\n2 STA B\n3 LDI C\n4 STA C\n5 STA D\n6 LDI E\n" +
-      "7 STA E\n8 STA F\n9 JMP 0\nA 0\nB 0\nC 0\nD 0\nE 0\nF 0";
+      "7 STA E\n8 STA F\n9 JMP 0\nA 0\nB 0\nC 0\nD 0\nE 0\nF 0"; */
   } else if (document.getElementById("examples").value == "Mult 7x8") {
     document.getElementById("Source Code").value =
       "0 LDA E\n1 SUB C\n2 JC 6\n3 LDA D\n4 OUT\n5 HLT\n6 STA E\n7 LDA D\n" +
@@ -172,10 +172,10 @@ function change_example() {
   } else if (document.getElementById("examples").value == "Counter") {
     document.getElementById("Source Code").value =
       "0 LDI 1\n1 STA F\n2 LDI 0\n3 ADD F\n4 OUT\n5 JMP 3\n";
-  } else if (document.getElementById("examples").value == "Add Halt") {
+  /* } else if (document.getElementById("examples").value == "Add Halt") {
     document.getElementById("Source Code").value =
       "0 LDI 1\n1 STA F\n2 LDI 1\n3 ADD F\n4 OUT\n5 STA F\n6 LDI 2\n7 ADD F\n" +
-      "8 OUT\n9 STA F\nA LDI 3\nB ADD F\nC OUT\nD STA F\nE HLT\nF 0\n";
+      "8 OUT\n9 STA F\nA LDI 3\nB ADD F\nC OUT\nD STA F\nE HLT\nF 0\n"; */
   } else if (document.getElementById("examples").value == "Fibonacci") {
     document.getElementById("Source Code").value =
       "0 LDI 1\n1 STA E\n2 LDI 0\n3 ADD E\n4 STA F\n5 LDA E\n6 STA D\n7 LDA F\n" +
@@ -1313,7 +1313,7 @@ const micro_bit_names = ['HT','MI','RI','RO','IO','II','AI','AO','EO','SU','BI',
 
 
 function console_log ( s ) {
-  // console.log ( s );
+  console.log ( s );
 }
 
 var count = 0;
