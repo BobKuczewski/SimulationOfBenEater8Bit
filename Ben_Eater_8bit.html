@@ -967,7 +967,7 @@ class ExecModeButton extends ToggleButton {
   constructor ( name, center_x, center_y, w, h ) {
     super ( name, center_x, center_y, w, h );
     this.mode_names  = [  "macro",  "micro1",  "micro2"];
-    this.mode_colors = ["#ff0000", "#00ff00", "#0000ff"];
+    this.mode_colors = ["#0000ff", "#00ff00", "#ff0000"];
     this.mode_index  = 1; // micro1
     this.down_color  = this.mode_colors[this.mode_index];
     this.up_color    = this.mode_colors[this.mode_index];
@@ -1700,11 +1700,15 @@ function exec_next() {
         console.log ( "Out = " + a_reg.get_value() );
         display_out.set_digits ( String(a_reg.get_value()) );
       } else if (upper == 0x0f) { // "FX" Halt instruction ("HLT")
+        control_word.set_value ( HT );
         clock.stop();
         stop();
       }
       bus.randomize_bits();
-      control_word.randomize_bits();
+      if (upper != 0x0f) { // "FX" Halt instruction ("HLT")
+        // Show a random word when not halted
+        control_word.randomize_bits();
+      }
       // Increment the program counter as needed
       pc = (pc + 1) % 16;
       prog_ctr.set_value ( pc );
