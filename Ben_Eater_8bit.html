@@ -1725,7 +1725,7 @@ function exec_next() {
 
 function LDI_test_passed(x) {
   // Verify the correct results from LDI x
-  execution_mode.set_mode ( "micro1" );
+  // execution_mode.set_mode ( "micro1" );
 
   // Set up the test case
   control_word.set_value ( 0 );
@@ -1751,7 +1751,7 @@ function LDI_test_passed(x) {
 
 function ADD_test_passed(i,j) {
   // Verify the correct results from i+j
-  execution_mode.set_mode ( "micro1" );
+  // execution_mode.set_mode ( "micro1" );
 
   // Set up the test case
   control_word.set_value ( 0 );
@@ -1797,7 +1797,7 @@ function ADD_test_passed(i,j) {
 
 function SUB_test_passed(i,j) {
   // Verify the correct results from i-j
-  execution_mode.set_mode ( "micro1" );
+  // execution_mode.set_mode ( "micro1" );
 
   // Set up the test case
   control_word.set_value ( 0 );
@@ -1843,7 +1843,7 @@ function SUB_test_passed(i,j) {
 
 function processor_test() {
   // This function can test execution of instructions
-  execution_mode.set_mode ( "micro1" );
+  execution_mode.set_mode ( "micro1" ); // macro micro1 micro1 (Note: tests currently only pass using micro1)
 
   let passed = false;
 
