@@ -499,6 +499,31 @@ class ToggleButton extends Button {
 }
 
 
+class DIPSwitch extends ToggleButton {
+  constructor ( name, center_x, center_y, w, h ) {
+    super ( name, center_x, center_y, w, h );
+    this.down_color = "#ffffff";
+    this.up_color   = "#000000";
+  }
+  get_value() {
+    if (this.down) {
+      return ( 1 );
+    } else {
+      return ( 0 );
+    }
+  }
+  mouse_down ( event ) {
+    if (this.event_in_button(event)) {
+      this.down = !this.down;
+      update_canvas();
+      this.down_action ( event );
+    }
+  }
+  mouse_up ( event ) {
+  }
+}
+
+
 var button_list = [];
 
 function draw_button_list ( ctxt ) {
@@ -910,6 +935,48 @@ class RunProgMode extends Register {
   }
 }
 
+class ProgModeToggle extends ToggleButton { // prog_mode_toggle
+  constructor ( name, center_x, center_y, w, h, clock ) {
+    super ( name, center_x, center_y, w, h );
+  }
+  down_action ( event ) {
+    run_prog_mode.set_value ( !this.down );
+    update_canvas();
+  }
+  up_action ( event ) {
+    run_prog_mode.set_value ( !this.down );
+    update_canvas();
+  }
+}
+
+class ProgramWrite extends Button { // program_write_button
+  constructor ( name, center_x, center_y, w, h, clock ) {
+    super ( name, center_x, center_y, w, h );
+  }
+  down_action ( event ) {
+    if (prog_mode_toggle.down) {
+      let mem_addr = (mem_addr_DIP_3.get_value() << 3) +
+                     (mem_addr_DIP_2.get_value() << 2) +
+                     (mem_addr_DIP_1.get_value() << 1) +
+                     (mem_addr_DIP_0.get_value() << 0);
+      let data_val = (data_in_DIP_7.get_value() << 7) +
+                     (data_in_DIP_6.get_value() << 6) +
+                     (data_in_DIP_5.get_value() << 5) +
+                     (data_in_DIP_4.get_value() << 4) +
+                     (data_in_DIP_3.get_value() << 3) +
+                     (data_in_DIP_2.get_value() << 2) +
+                     (data_in_DIP_1.get_value() << 1) +
+                     (data_in_DIP_0.get_value() << 0);
+      if (mem_addr < memory.length) {
+        memory[mem_addr] = data_val;
+      }
+    } else {
+      console.log ( "Unable to Program in Run Mode - Toggle the Run/Load Button" );
+    }
+  }
+}
+
+
 class ProgramCounter extends Register {
   constructor (name,nbits) {
     super("Program Counter",nbits);
@@ -1126,6 +1193,38 @@ zero_bit = new ZeroRegister("Zero", 1);
 bus = new BusContents("Bus", 8);
 control_word = new ControlWord("Control", 16);
 display_out = new SevenSegmentDisplay("Display", 3);
+
+prog_mode_toggle = new ProgModeToggle ( "Program Toggle", 32,108, 14,14, null );
+button_list.push ( prog_mode_toggle );
+
+program_write_button = new ProgramWrite ( "Program Write", 25,267, 20,20, null );
+button_list.push ( program_write_button );
+
+mem_addr_DIP_3 = new DIPSwitch ( "DIP_MA3", 70,111, 3,7, null );
+button_list.push ( mem_addr_DIP_3 );
+mem_addr_DIP_2 = new DIPSwitch ( "DIP_MA2", 74,111, 3,7, null );
+button_list.push ( mem_addr_DIP_2 );
+mem_addr_DIP_1 = new DIPSwitch ( "DIP_MA1", 79,111, 3,7, null );
+button_list.push ( mem_addr_DIP_1 );
+mem_addr_DIP_0 = new DIPSwitch ( "DIP_MA0", 83,111, 3,7, null );
+button_list.push ( mem_addr_DIP_0 );
+
+data_in_DIP_7 = new DIPSwitch ( "DIP_D7", 79,268, 3,7, null );
+button_list.push ( data_in_DIP_7 );
+data_in_DIP_6 = new DIPSwitch ( "DIP_D6", 83,268, 3,7, null );
+button_list.push ( data_in_DIP_6 );
+data_in_DIP_5 = new DIPSwitch ( "DIP_D5", 87,268, 3,7, null );
+button_list.push ( data_in_DIP_5 );
+data_in_DIP_4 = new DIPSwitch ( "DIP_D4", 91,268, 3,7, null );
+button_list.push ( data_in_DIP_4 );
+data_in_DIP_3 = new DIPSwitch ( "DIP_D3", 97,268, 3,7, null );
+button_list.push ( data_in_DIP_3 );
+data_in_DIP_2 = new DIPSwitch ( "DIP_D2", 101,268, 3,7, null );
+button_list.push ( data_in_DIP_2 );
+data_in_DIP_1 = new DIPSwitch ( "DIP_D1", 105,268, 3,7, null );
+button_list.push ( data_in_DIP_1 );
+data_in_DIP_0 = new DIPSwitch ( "DIP_D0", 109,268, 3,7, null );
+button_list.push ( data_in_DIP_0 );
 
 micromacro = new ToggleButton ("MicroMacro", 600, 30, 20, 20);
 micromacro.up_color   = "#ff888840";
