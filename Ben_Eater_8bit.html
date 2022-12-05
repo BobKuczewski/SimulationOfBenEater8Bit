@@ -1298,6 +1298,7 @@ function exec_next() {
         control_word.set_value ( MI | CE );
         bus.set_value ( prog_ctr.get_value() );
         mem_addr.set_value ( bus.get_value() );
+        mem_data.set_value ( memory[mem_addr.get_value()] );
       } else if (ucode_step == 1) {
         // Always move from memory into the Instruction Register
         // RO = RAM Out
@@ -1328,6 +1329,7 @@ function exec_next() {
             control_word.set_value ( MI | IO );
             bus.set_value ( inst_data.get_value() );
             mem_addr.set_value ( bus.get_value() );
+            mem_data.set_value ( memory[mem_addr.get_value()] );
           } else if (ucode_step == 3) {
             // RO = RAM Out
             // AI = A Register In
@@ -1351,6 +1353,7 @@ function exec_next() {
             control_word.set_value ( MI | IO );
             bus.set_value ( inst_data.get_value() );
             mem_addr.set_value ( bus.get_value() );
+            mem_data.set_value ( memory[mem_addr.get_value()] );
           } else if (ucode_step == 3) {
             // RO = RAM Out
             // BI = B Register In
@@ -1395,6 +1398,7 @@ function exec_next() {
             control_word.set_value ( MI | IO );
             bus.set_value ( inst_data.get_value() );
             mem_addr.set_value ( bus.get_value() );
+            mem_data.set_value ( memory[mem_addr.get_value()] );
           } else if (ucode_step == 3) {
             // RO = RAM Out
             // BI = B Register In
@@ -1436,6 +1440,7 @@ function exec_next() {
             control_word.set_value ( MI | IO );
             bus.set_value ( inst_data.get_value() );
             mem_addr.set_value ( bus.get_value() );
+            mem_data.set_value ( memory[mem_addr.get_value()] );
           } else if (ucode_step == 3) {
             // RI = RAM In
             // AO = A Register Out
