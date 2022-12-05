@@ -1449,7 +1449,7 @@ function exec_next() {
             console_log ( "Subtract put in A" );
             control_word.set_value ( AI | EO | FI | SU );
             let result = a_reg.get_value() - b_reg.get_value();
-            if (result < 0x00) {
+            if (result >= 0x00) {
               carry_bit.set_value ( 1 );
             } else {
               carry_bit.set_value ( 0 );
