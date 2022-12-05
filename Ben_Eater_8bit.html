@@ -34,7 +34,7 @@ function hex1 ( v ) {
 }
 
 function hex2 ( v ) {
-	h = (v % 256).toString(16).toUpperCase();
+	let h = (v % 256).toString(16).toUpperCase();
 	while (h.length < 2) {
 		h = "0" + h;
 	}
@@ -42,11 +42,39 @@ function hex2 ( v ) {
 }
 
 function hex4 ( v ) {
-	h = (v % 65536).toString(16).toUpperCase();
+	let h = (v % 65536).toString(16).toUpperCase();
 	while (h.length < 4) {
 		h = "0" + h;
 	}
 	return ( h );
+}
+
+function bin1 ( v ) {
+	return ( (v % 2).toString(2) );
+}
+
+function bin2 ( v ) {
+	let b = (v % 4).toString(2);
+	while (b.length < 2) {
+		b = "0" + b;
+	}
+	return ( b );
+}
+
+function bin3 ( v ) {
+	let b = (v % 8).toString(2);
+	while (b.length < 3) {
+		b = "0" + b;
+	}
+	return ( b );
+}
+
+function bin4 ( v ) {
+	let b = (v % 16).toString(2);
+	while (b.length < 4) {
+		b = "0" + b;
+	}
+	return ( b );
 }
 
 function display_status() {
@@ -1313,6 +1341,93 @@ function console_log ( s ) {
   // console.log ( s );
 }
 
+class MicroCodeMachine {
+  constructor() {
+    this.ucode = [
+      //Inst      State         Control Word
+      ["FCH", "xxxx 000 xx", "01000000 00000100"],
+      ["FCH", "xxxx 001 xx", "00010100 00001000"],
+
+      ["NOP", "0000 010 xx", "00000000 00000000"],
+      ["NOP", "0000 011 xx", "00000000 00000000"],
+      ["NOP", "0000 100 xx", "00000000 00000000"],
+
+      ["LDA", "0001 010 xx", "01001000 00000000"],
+      ["LDA", "0001 011 xx", "00010010 00000000"],
+      ["LDA", "0001 100 xx", "00000000 00000000"],
+
+      ["ADD", "0010 010 xx", "01001000 00000000"],
+      ["ADD", "0010 011 xx", "00010000 00100000"],
+      ["ADD", "0010 100 xx", "00000010 10000001"],
+
+      ["SUB", "0011 010 xx", "01001000 00000000"],
+      ["SUB", "0011 011 xx", "00010000 00100000"],
+      ["SUB", "0011 100 xx", "00000010 11000001"],
+
+      ["STA", "0100 010 xx", "01001000 00000000"],
+      ["STA", "0100 011 xx", "00100001 00000000"],
+      ["STA", "0100 100 xx", "00000000 00000000"],
+
+      ["LDI", "0101 010 xx", "00001010 00000000"],
+      ["LDI", "0101 011 xx", "00000000 00000000"],
+      ["LDI", "0101 100 xx", "00000000 00000000"],
+
+      ["JMP", "0110 010 xx", "00001000 00000010"],
+      ["JMP", "0110 011 xx", "00000000 00000000"],
+      ["JMP", "0110 100 xx", "00000000 00000000"],
+
+      ["JC",  "0111 010 0x", "00000000 00000000"],
+      ["JC",  "0111 010 1x", "00001000 00000010"],
+      ["JC",  "0111 011 xx", "00000000 00000000"],
+      ["JC",  "0111 100 xx", "00000000 00000000"],
+
+      ["JZ",  "1000 010 x0", "00000000 00000000"],
+      ["JZ",  "1000 010 x1", "00001000 00000010"],
+      ["JZ",  "1000 011 xx", "00000000 00000000"],
+      ["JZ",  "1000 100 xx", "00000000 00000000"],
+
+      ["OUT", "1110 010 xx", "00000001 00010000"],
+      ["OUT", "1110 011 xx", "00000000 00000000"],
+      ["OUT", "1110 100 xx", "00000000 00000000"],
+
+      ["HLT", "1111 010 xx", "10000000 00000000"],
+      ["HLT", "1111 011 xx", "00000000 00000000"],
+      ["HLT", "1111 100 xx", "00000000 00000000"]
+    ];
+    // Remove spaces from ucode
+    for (let i=0; i<this.ucode.length; i++) {
+      this.ucode[i][1] = this.ucode[i][1].replaceAll(" ","");
+      this.ucode[i][2] = this.ucode[i][2].replaceAll(" ","");
+    }
+  }
+  get_word_str ( instruction, step, flags ) {
+    // console.log ( "get_word_str called with (" + instruction + "," + step + "," + flags + ")" );
+    let ucode_entry = this.ucode[Math.trunc(Math.random()*this.ucode.length)];
+    let ucode_word = ucode_entry[2];
+    // console.log ( "Code word = " + ucode_word );
+    return ( ucode_word );
+  }
+  exec_next() {
+    ucode_ctr.update ( clock.get_state() );
+    if (clock.get_state()) {
+      let ucode_step = ucode_ctr.get_value();
+      let ucode_word = ""
+      if (ucode_step == 0) {
+        let ws = this.get_word_str ( "xxxx", bin3(ucode_step), "xx" );
+        control_word.set_value ( parseInt ( ws, 2 ) );
+      } else if (ucode_step == 1) {
+        let ws = this.get_word_str ( "xxxx", bin3(ucode_step), "xx" );
+        control_word.set_value ( parseInt ( ws, 2 ) );
+      } else {
+        let ws = this.get_word_str ( "xxxx", bin3(ucode_step), "xx" );
+        control_word.set_value ( parseInt ( ws, 2 ) );
+      }
+    }
+  }
+}
+
+microcode_machine = new MicroCodeMachine();
+
 var count = 0;
 function exec_next() {
 
@@ -1329,8 +1444,10 @@ function exec_next() {
   clock.half_tick();
 
   if (execution_mode.get_mode_name() == "micro2") {
-    console.log ( "micro2" + " mode" );
-    console.log ( "micro2 not implemented yet" );
+    // console.log ( "micro2" + " mode" );
+    // console.log ( "micro2 not implemented yet" );
+    // control_word.randomize_bits();
+    microcode_machine.exec_next();
   } else if (execution_mode.get_mode_name() == "micro1") {
     // Execucte micro instructions step by step
     // console.log ( "micro1" + " mode" );
