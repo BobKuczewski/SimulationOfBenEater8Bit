@@ -137,41 +137,9 @@ function change_example() {
   } else if (document.getElementById("examples").value == "Line Nums") {
     document.getElementById("Source Code").value =
       "0 \n1 \n2 \n3 \n4 \n5 \n6 \n7 \n8 \n9 \nA \nB \nC \nD \nE \nF \n";
-  /* } else if (document.getElementById("examples").value == "All Legal") {
-    document.getElementById("Source Code").value =
-      "0 NOP 0\n1 LDA 1\n2 ADD 2\n3 SUB 3\n4 STA 4\n5 LDI 5\n6 JMP 6\n7 JC 7\n" +
-      "8 JZ 8\n9 OUT E\nA HLT F\nB 9\nC A\nD B\nE C\nF D\n";
-  } else if (document.getElementById("examples").value == "All Ops") {
-    document.getElementById("Source Code").value =
-      "0 NOP 0\n1 LDA 1\n2 ADD 2\n3 SUB 3\n4 STA 4\n5 LDI 5\n6 JMP 6\n7 JC 7\n" +
-      "8 JZ 8\nE OUT E\nF HLT F\n9 9 9\nA A A\nB B B\nC C C\nD D D\n";
-  } else if (document.getElementById("examples").value == "Test LDA") {
-    document.getElementById("Source Code").value =
-      "0 LDA A\n1 LDA B\n2 LDA C\n3 LDA D\n4 LDA E\n5 LDA F\n6 LDA A\n" +
-      "7 LDA B\n8 LDA C\n9 LDA D\nA 1\nB 2\nC 3\nD 4\nE 5\nF 6\n";
-  } else if (document.getElementById("examples").value == "Test LDI") {
-    document.getElementById("Source Code").value =
-      "0 LDI 1\n1 LDI 2\n2 LDI 3\n3 LDI 4\n4 LDI 5\n5 LDI 6\n6 LDI 7\n7 LDI 8\n" +
-      "8 LDI F\n9 LDI E\nA LDI D\nB LDI C\nC LDI B\nD LDI A\nE LDI 9\nF LDI 0\n";
-  } else if (document.getElementById("examples").value == "Test JMP") {
-    document.getElementById("Source Code").value =
-      "0 LDI 1\n1 JMP 4\n2 LDI 8\n3 LDI 9\n4 LDI 2\n5 JMP 7\n6 LDI A\n7 LDI 3\n" +
-      "8 JMP F\n9 LDI B\nA LDI 4\nB JMP D\nC LDI C\nD LDI 5\nE JMP 0\nF JMP A\n";
-  } else if (document.getElementById("examples").value == "Test OUT") {
-    document.getElementById("Source Code").value =
-      "0 LDI 1\n1 OUT\n2 LDI 2\n3 OUT\n4 LDI 3\n5 OUT\n6 LDI 4\n7 OUT\n" +
-      "8 LDI 5\n9 OUT\nA LDI 4\nB OUT\nC LDI 3\nD OUT\nE LDI 2\nF OUT\n";
-  } else if (document.getElementById("examples").value == "Test STA") {
-    document.getElementById("Source Code").value =
-      "0 LDI A\n1 STA A\n2 STA B\n3 LDI C\n4 STA C\n5 STA D\n6 LDI E\n" +
-      "7 STA E\n8 STA F\n9 JMP 0\nA 0\nB 0\nC 0\nD 0\nE 0\nF 0"; */
   } else if (document.getElementById("examples").value == "Counter") {
     document.getElementById("Source Code").value =
       "0 LDI 1\n1 STA F\n2 LDI 0\n3 ADD F\n4 OUT\n5 JMP 3\n";
-  /* } else if (document.getElementById("examples").value == "Add Halt") {
-    document.getElementById("Source Code").value =
-      "0 LDI 1\n1 STA F\n2 LDI 1\n3 ADD F\n4 OUT\n5 STA F\n6 LDI 2\n7 ADD F\n" +
-      "8 OUT\n9 STA F\nA LDI 3\nB ADD F\nC OUT\nD STA F\nE HLT\nF 0\n"; */
   } else if (document.getElementById("examples").value == "Fibonacci") {
     document.getElementById("Source Code").value =
       "0 LDI 1\n1 STA E\n2 LDI 0\n3 ADD E\n4 STA F\n5 LDA E\n6 STA D\n7 LDA F\n" +
@@ -202,8 +170,6 @@ function change_example() {
 }
 
 
-var consoleDebug = false;
-
 var gray_on = "#cccccc";
 var gray_off = "#444444";
 var red_on = "#ff6060";
@@ -215,14 +181,8 @@ var blue_off = "#304090";
 var green_on = "#80ff08";
 var green_off = "#185621";
 
-function toggle_debug() {
-  let debug = document.getElementById('debug');
-  consoleDebug = debug.checked;
-}
-
 class Register {
   constructor ( name, nbits ) {
-    if (consoleDebug) console.log ( "New Register " + name );
     this.nbits = nbits;
     this.reg_name = name;
     this.on_color = gray_on;
@@ -274,7 +234,6 @@ class Register {
     }
   }
   draw ( ctxt ) {
-    // console.log ( "Draw Register " + this.reg_name );
     // Draw the Register lights
     for (let i=0; i<this.position.length; i++) {
       let s = false;
@@ -367,11 +326,9 @@ class Button {
   }
   down_action ( event ) {
     // Implement in subclasses
-    // console.log ( "Button " + this.button_name + " down" );
   }
   up_action ( event ) {
     // Implement in subclasses
-    // console.log ( "Button " + this.button_name + " up" );
   }
 }
 
@@ -516,7 +473,6 @@ class SpeedButton extends Button { // clock_speed_button
     }
     this.down_color = this.clock.clock_speed_colors[this.clock.clock_speed_index];
     this.up_color = this.clock.clock_speed_colors[this.clock.clock_speed_index];
-    console.log ( "New speed = " + this.clock.clock_speeds[this.clock.clock_speed_index] );
     update_canvas();
   }
   up_action ( event ) {
@@ -589,11 +545,9 @@ class ClockModule { // extends Register {
   }
 
   mouse_up ( event ) {
-    // console.log ( "Clock.mouse_up()" );
   }
 
   mouse_down ( event ) {
-    // console.log ( "Clock.mouse_down()" );
     if (this.clock_run_stop_button.down) {
       run();
     } else {
@@ -628,8 +582,6 @@ class uCodeCounter extends Register {
                               [true,97,390],
                               [true,108,390],
                               [true,120,390] ];
-    //                        [false,124,390],
-    //                        [false,128,390] ];
     this.last_pc = 0;
   }
 
@@ -688,7 +640,6 @@ class uCodeCounter extends Register {
       this.last_pc = prog_ctr.get_value();
     }
 
-    // console.log ( "this.state before pc = " + this.state );
     return ( this.state );
   }
 
@@ -1041,7 +992,6 @@ function encode ( instruction ) {
   inst = inst.toUpperCase().split(' ');
   if (inst.length >= 2) {
     // Legal since all must be at least 2 (or 3)
-    // console.log ( "assem " + inst );
     // Check to see if the second operand is an instruction
     let legal   = ["NOP","LDA","ADD","SUB","STA","LDI","JMP","JC","JZ","OUT","HLT"];
     let opcodes = [ 0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60,0x70,0x80, 0xE0,0xf0 ];
@@ -1053,7 +1003,6 @@ function encode ( instruction ) {
         // Append the parameter
         opcode = opcode | parseInt ( inst[2], 16 );
       }
-      // console.log ( "Op: " + opcode.toString(16).toUpperCase() );
       return ( opcode );
     } else {
       // This must be a stored number
@@ -1118,19 +1067,19 @@ button_list.push ( data_in_DIP_1 );
 data_in_DIP_0 = new DIPSwitch ( "DIP_D0", 109,268, 3,7, null );
 button_list.push ( data_in_DIP_0 );
 
+// This allows toggling between microcode and macrocode.
+// However, the macrocode is not currently being maintained.
 micromacro = new ToggleButton ("MicroMacro", 600, 30, 20, 20);
 micromacro.up_color   = "#ff888840";
 micromacro.down_color = "#ff5555e0";
-// button_list.push ( micromacro );
+button_list.push ( micromacro );
 
 var image = new Image();
 var image_loaded = false;
 
 function update_canvas() {
-  // console.log ( "Inside Update Canvas" );
   display_status();
   var canvas = document.getElementById('drawing_area');
-  // if (consoleDebug) console.log ( "update_canvas" );
   if (canvas != null) {
     var ctxt = canvas.getContext('2d');
     var w = canvas.width = 640;
@@ -1581,8 +1530,6 @@ function exec_next() {
             control_word.set_value ( 0 );
           }
         } else if (operation == 0x0f) { // "FX" Halt instruction ("HLT")
-          console_log ( "Executing HLT " + operand );
-          console_log ( "Set HT bit in control word" );
           control_word.set_value ( HT );
           clock.stop();
           stop();
@@ -1593,14 +1540,13 @@ function exec_next() {
     }
   } else {
     // Execute macro instructions
-    console.log ( "Macro" );
+
     // Update the ucode counter
     ucode_ctr.update ( clock.get_state() );
 
     if ( clock.get_state() && (ucode_ctr.get_state() == 3) ) {
       // Execute the current instruction
       let pc = prog_ctr.get_value();
-      if (consoleDebug) console.log ( "Execute " + hex2(memory[pc]) + " = " + decode(memory[pc]) );
 
       mem_addr.set_value ( pc );
       mem_data.set_value ( memory[pc] );
@@ -1615,14 +1561,12 @@ function exec_next() {
       } else if (upper == 0x01) { // "LDA " + lower );
         mem_addr.set_value ( lower );
         mem_data.set_value ( memory[lower] );
-        if (consoleDebug) console.log ( "  A = memory[" + lower + "] = " + memory[lower] );
         let value = memory[lower];
         a_reg.set_value ( value );
         sum_reg.set_value ( (a_reg.get_value() + b_reg.get_value()) );
       } else if (upper == 0x02) { // "ADD " + lower );
         mem_addr.set_value ( lower );
         mem_data.set_value ( memory[lower] );
-        if (consoleDebug) console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
         let value = memory[lower];
         b_reg.set_value ( value );
         let result = a_reg.get_value() + b_reg.get_value();
@@ -1637,23 +1581,34 @@ function exec_next() {
       } else if (upper == 0x03) { // "SUB " + lower );
         mem_addr.set_value ( lower );
         mem_data.set_value ( memory[lower] );
-        if (consoleDebug) console.log ( "  B = memory[" + lower + "] = " + memory[lower] );
         let value = memory[lower];
         b_reg.set_value ( value );
-        sum_reg.set_value ( a_reg.get_value() - b_reg.get_value() );
-        a_reg.set_value ( sum_reg.get_value() );
+        let result = a_reg.get_value() - b_reg.get_value();
+        if (result >= 0x00) {
+          carry_bit.set_value ( 1 );
+        } else {
+          carry_bit.set_value ( 0 );
+        }
+        if (result == 0) {
+          zero_bit.set_value ( 1 );
+        } else {
+          zero_bit.set_value ( 0 );
+        }
+        result = result & 0xff;
+        sum_reg.set_value ( result );
+        bus.set_value ( result );
+        a_reg.set_value ( bus.get_value() );
+
       } else if (upper == 0x04) { // "STA " + lower );
         mem_addr.set_value ( lower );
         mem_data.set_value ( memory[lower] );
         memory[lower] = a_reg.get_value();
         sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
       } else if (upper == 0x05) { // "LDI " + lower );
-        if (consoleDebug) console.log ( "  A = " + lower );
         a_reg.set_value ( lower );
         sum_reg.set_value ( a_reg.get_value() + b_reg.get_value() );
       } else if (upper == 0x06) { // "JMP " + lower );
         mem_addr.set_value ( lower );
-        if (consoleDebug) console.log ( "  JMP " + lower );
         let value = memory[lower];
         mem_data.set_value ( memory[lower] );
         pc = lower - 1; // Jump before destination since pc will be incremented
@@ -1665,6 +1620,12 @@ function exec_next() {
           pc = lower - 1; // Jump before destination since pc will be incremented
         }
       } else if (upper == 0x08) { // "JZ  " + lower );
+        if (zero_bit.get_value() != 0) {
+          mem_addr.set_value ( lower );
+          mem_data.set_value ( memory[lower] );
+          let value = memory[lower];
+          pc = lower - 1; // Jump before destination since pc will be incremented
+        }
       } else if (upper == 0x09) { // "?09 " + lower );
       } else if (upper == 0x0a) { // "?0A " + lower );
       } else if (upper == 0x0b) { // "?0B " + lower );
@@ -1893,10 +1854,6 @@ Processor<br/>
 <p></p>
 <pre id="mem_status">Memory goes here.
 </pre>
-<!--
-<p></p>
-&nbsp;<input type="checkbox" id="debug" checked onclick="toggle_debug();">Debug</input>
--->
 </td>
 
 <td style="border: none;" valign="top">
@@ -1959,88 +1916,7 @@ Instruction Set (a=address, v=value, x=don't care)
 <tr><td>HLT</td><td>Fx</td><td>1111 xxxx</td><td>Halt (could use XXXX for other instructions, push, pop, chs, etc.)</td></tr>
 </table>
 </center>
-<!--
-<hr/>
-Examples:
-<pre>
-Instruction set:
-NOP = 0000 XXXX
-LDA = 0001 addr
-ADD = 0010 addr
-SUB = 0011 addr
-STA = 0100 addr
-LDI = 0101 value
-JMP = 0110 addr
-JC  = 0111 addr
-JZ  = 1000 addr
-    = 1001
-    = 1010
-    = 1011
-    = 1100
-    = 1101
-OUT = 1110 XXXX  // Could use XXXX for In/Out and multiple channels
-HLT = 1111 XXXX  // Could use XXXX for other instructions, push, pop, chs, etc.
 
-//var memory = [
-//* 0 */ 0x1e,  // LDA E (ff)
-//* 1 */ 0x55,  // LDI 5
-//* 2 */ 0x2f,  // ADD F 5
-//* 3 */ 0x3d,  // SUB F 1
-//* 4 */ 0xf0,  // HLT
-//* 5 */ 0x60,  // JMP 0
-//* 6 */ 0x00,
-//* 7 */ 0x00,
-//* 8 */ 0x00,
-//* 9 */ 0x00,
-//* a */ 0x00,
-//* b */ 0x00,
-//* c */ 0x00,
-//* d */ 0x01,
-//* e */ 0xff,
-//* f */ 0x05,
-//];
-
-/* Program to shift A along (works)
-  0x18,
-  0x19,
-  0x1a,
-  0x1b,
-  0x1c,
-  0x1d,
-  0x1e,
-  0x60, // Jump 0
-  0x01,
-  0x02,
-  0x04,
-  0x08,
-  0x10,
-  0x20,
-  0x40,
-  0x80
-*/
-
-/*
-// Program to shift A to the left
-  0x18,  // 00: LDA 14
-  0x19,
-  0x1a,
-  0x1b,
-  0x1c,
-  0x1d,
-  0x1e,
-  0x1f,
-
-  0x01,
-  0x02,
-  0x04,
-  0x08,
-  0x10,
-  0x20,
-  0x40,
-  0x80
-*/
-
-</pre>
 -->
 </body>
 </html>
