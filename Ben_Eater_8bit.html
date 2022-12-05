@@ -986,7 +986,7 @@ class ExecModeButton extends ToggleButton {
     return ( this.mode_names[this.mode_index] );
   }
   mouse_down ( event ) {
-    console.log ( "Exec Mode change from " + this.mode_index );
+    // console.log ( "Exec Mode change from " + this.mode_index );
     if (this.event_in_button(event)) {
       this.down = !this.down;
       this.mode_index += 1;
@@ -1333,7 +1333,7 @@ function exec_next() {
     console.log ( "micro2 not implemented yet" );
   } else if (execution_mode.get_mode_name() == "micro1") {
     // Execucte micro instructions step by step
-    console.log ( "micro1" + " mode" );
+    // console.log ( "micro1" + " mode" );
     ucode_ctr.update ( clock.get_state() );
     if (clock.get_state()) {
       let ucode_step = ucode_ctr.get_value();
@@ -1601,7 +1601,7 @@ function exec_next() {
     }
 
   } else if (execution_mode.get_mode_name() == "macro") {
-    console.log ( "macro" + " mode" );
+    // console.log ( "macro" + " mode" );
 
     // Execute macro instructions
 
@@ -1722,6 +1722,7 @@ function exec_next() {
 function LDI_test_passed(x) {
   // Verify the correct results from LDI x
   execution_mode.set_mode ( "micro1" );
+
   // Set up the test case
   control_word.set_value ( 0 );
   clock.reset_button.reset();
@@ -1747,6 +1748,7 @@ function LDI_test_passed(x) {
 function ADD_test_passed(i,j) {
   // Verify the correct results from i+j
   execution_mode.set_mode ( "micro1" );
+
   // Set up the test case
   control_word.set_value ( 0 );
   clock.reset_button.reset();
@@ -1789,15 +1791,109 @@ function ADD_test_passed(i,j) {
   return ( true );
 }
 
+function SUB_test_passed(i,j) {
+  // Verify the correct results from i-j
+  execution_mode.set_mode ( "micro1" );
+
+  // Set up the test case
+  control_word.set_value ( 0 );
+  clock.reset_button.reset();
+  memory[0] = 0x14; // LDA 4
+  memory[1] = 0x35; // SUB 5
+  memory[2] = 0xf0; // HLT
+  memory[3] = 0xf0; // HLT
+  memory[4] = 0x00 | i; // Value of i
+  memory[5] = 0x00 | j; // Value of j
+  // Run the processor until halted
+  for (let i=0; i<100; i++) {
+    exec_next();
+    if (control_word.get_value(HT)[0]) {
+      break; // Processor halted, so break out of execution loop
+    }
+  }
+  // Verify the result
+  if (a_reg.get_value() != ((i-j)&0xff)) {
+    console.log ( "SUB Test (" + i + "-" + j + ") expected A=" + (i-j) + ", but got A=" + a_reg.get_value() );
+    return ( false );
+  }
+  // Verify the carry bit
+  let expected_carry = 0;
+  if (i-j >= 0) {
+    expected_carry = 1;
+  }
+  if (carry_bit.get_value() != expected_carry) {
+    console.log ( "SUB Test (" + i + "-" + j + ") expected C=" + expected_carry + ", but got C=" + carry_bit.get_value() );
+    return ( false );
+  }
+  // Verify the zero bit
+  let expected_zero = 0;
+  if (i-j == 0) {
+    expected_zero = 1;
+  }
+  if (zero_bit.get_value() != expected_zero) {
+    console.log ( "SUB Test (" + i + "-" + j + ") expected Z=" + expected_zero + ", but got Z=" + zero_bit.get_value() );
+    return ( false );
+  }
+  return ( true );
+}
+
 function processor_test() {
   // This function can test execution of instructions
   execution_mode.set_mode ( "micro1" );
+
   let passed = false;
 
   // Run LDI tests:
   for (let x=0; x<16; x++) {
     console.log ( "LDI Test " + x );
     passed = LDI_test_passed(x);
+    if (passed == false) {
+      return ( false );
+    }
+  }
+
+  // Run edge cases for SUB
+  let sub_cases = [ [0,0], [0,1], [1,1], [0xfe,1], [0xfe,2], [0xff,0], [0xff,1], [0xff,2], [0xff,0xff] ];
+  for (let i=0; i<sub_cases.length; i++) {
+    console.log ( "SUB Test: " + sub_cases[i][0] + " - " + sub_cases[i][1] );
+    passed = SUB_test_passed(sub_cases[i][0],sub_cases[i][1]);
+    if (passed == false) {
+      return ( false );
+    }
+    console.log ( "SUB Test: " + sub_cases[i][1] + " - " + sub_cases[i][0] );
+    passed = SUB_test_passed(sub_cases[i][1],sub_cases[i][0]);
+    if (passed == false) {
+      return ( false );
+    }
+  }
+  // Test sample cases for SUB across the range of inputs
+  for (let x=0; x<256; x+=17) {
+    for (let y=0; y<256; y+=11) {
+      console.log ( "SUB Test: " + x + " - " + y );
+      passed = SUB_test_passed(x,y);
+      if (passed == false) {
+        return ( false );
+      }
+      console.log ( "SUB Test: " + y + " - " + x );
+      passed = SUB_test_passed(y,x);
+      if (passed == false) {
+        return ( false );
+      }
+    }
+  }
+  // Test SUB for randomly chosen sample cases
+  for (let i=0; i<1000; i++) {
+    let x = Math.floor ( 255 * Math.random() );
+    if (x > 255) x = 255;
+    let y = Math.floor ( 255 * Math.random() );
+    if (y > 255) y = 255;
+    console.log ( "SUB Test: " + x + " - " + y );
+    passed = SUB_test_passed(x,y);
+    if (passed == false) {
+      return ( false );
+    }
+    console.log ( "SUB Test: " + y + " - " + x );
+    passed = SUB_test_passed(y,x);
     if (passed == false) {
       return ( false );
     }
@@ -1817,8 +1913,7 @@ function processor_test() {
       return ( false );
     }
   }
-
-  // Test sample cases across the range of inputs
+  // Test sample cases for ADD across the range of inputs
   for (let x=0; x<256; x+=17) {
     for (let y=0; y<256; y+=11) {
       console.log ( "ADD Test: " + x + " + " + y );
@@ -1833,8 +1928,7 @@ function processor_test() {
       }
     }
   }
-
-  // Test randomly chosen sample cases
+  // Test ADD for randomly chosen sample cases
   for (let i=0; i<1000; i++) {
     let x = Math.floor ( 255 * Math.random() );
     if (x > 255) x = 255;
@@ -1851,6 +1945,7 @@ function processor_test() {
       return ( false );
     }
   }
+
   return ( true );
 }
 
