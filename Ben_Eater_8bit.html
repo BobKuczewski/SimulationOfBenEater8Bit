@@ -162,6 +162,10 @@ function change_example() {
     document.getElementById("Source Code").value = "";
   } else if (document.getElementById("examples").value == "NOP HLT") {
     document.getElementById("Source Code").value = "0 NOP\n1 HLT\n";
+  } else if (document.getElementById("examples").value == "Add Sub") {
+    document.getElementById("Source Code").value =
+      "0 ldi 0\n1 add 9\n2 sub 9\n3 add 8\n4 sub 7\n5 sub 9\n6 hlt\n" +
+      "7 7\n8 8\n9 9\nA a\nB b\nC c\nD d\nE e\nF f\n";
   } else if (document.getElementById("examples").value == "Line Nums") {
     document.getElementById("Source Code").value =
       "0 \n1 \n2 \n3 \n4 \n5 \n6 \n7 \n8 \n9 \nA \nB \nC \nD \nE \nF \n";
@@ -221,6 +225,13 @@ class Register {
   }
   get_state() {
     return ( this.state );
+  }
+  get_bit ( index ) {
+    if ((index > 0) && (index < this.state.length)) {
+      return ( this.state[index] );
+    } else {
+      return ( null );
+    }
   }
   get_value() {
     let value = 0;
@@ -400,6 +411,19 @@ class DIPSwitch extends ToggleButton {
   }
 }
 
+class MemDIPSwitch extends DIPSwitch {
+  mouse_down ( event ) {
+    super.mouse_down ( event );
+    if (prog_mode_toggle.down) {
+      let ma = (mem_addr_DIP_3.get_value() << 3) +
+               (mem_addr_DIP_2.get_value() << 2) +
+               (mem_addr_DIP_1.get_value() << 1) +
+               (mem_addr_DIP_0.get_value() << 0);
+      mem_addr.set_value ( ma );
+      update_canvas();
+    }
+  }
+}
 
 var button_list = [];
 
@@ -462,6 +486,7 @@ class ResetButton extends Button { // reset_button
     cpu_reset();
     this.state = false;
     clock.set_value(false);
+    control_word.set_value(0);
     ucode_ctr.set_value(0);
     ucode_ctr.last_pc = 0;
     prog_ctr.set_value(0);
@@ -717,8 +742,13 @@ class ARegister extends Register {
     this.state = [ true, false, true, false, false, false, true, true ];
     this.position = [ [422,134],[432,134],[443,134],[453,134],[464,134],[474,134],[485,134],[495,134] ];
   }
+  /*
+  set_value ( value ) {
+    super.set_value ( value );
+    sum_reg.update_sum();
+  }
+  */
 }
-
 
 class BRegister extends Register {
   constructor (name,nbits) {
@@ -728,9 +758,15 @@ class BRegister extends Register {
     this.radius = 5;
     this.state = [false,true,false,true,false,true,false,true];
     this.position = [ [424,290],[434,290],[445,290],[455,290],[466,290],[477,290],[488,290],[498,290] ];
+    this.sum_register = null;
   }
+  /*
+  set_value ( value ) {
+    super.set_value ( value );
+    sum_reg.update_sum();
+  }
+  */
 }
-
 
 class SumRegister extends Register {
   constructor (name,nbits) {
@@ -740,6 +776,98 @@ class SumRegister extends Register {
     this.radius = 5;
     this.state = [false,true,false,true,false,true,false,true];
     this.position = [ [368,220],[377,221],[389,221],[400,222],[409,222],[419,222],[429,222],[441,222] ];
+    this.a_register = null;
+    this.b_register = null;
+  }
+  update_sum() {
+    console.log ( "Sum sub=" + control_word.state[iSU] );
+    if (control_word.state[iSU]) {
+      // Subtract
+      let result = a_reg.get_value() - b_reg.get_value();
+      if (result >= 0x00) {
+        carry_bit.set_value ( 1 );
+      } else {
+        carry_bit.set_value ( 0 );
+      }
+      if (result == 0) {
+        zero_bit.set_value ( 1 );
+      } else {
+        zero_bit.set_value ( 0 );
+      }
+      result = result & 0xff;
+      this.set_value ( result );
+      // a_reg.set_value ( bus.get_value() );
+    } else {
+      // Add
+      let result = a_reg.get_value() + b_reg.get_value();
+      if (result > 0xff) {
+        carry_bit.set_value ( 1 );
+      } else {
+        carry_bit.set_value ( 0 );
+      }
+      if (result == 0) {
+        zero_bit.set_value ( 1 );
+      } else {
+        zero_bit.set_value ( 0 );
+      }
+      result = result & 0xff;
+      this.set_value ( result );
+      // a_reg.set_value ( bus.get_value() );
+    }
+    /*
+    } else if (operation == 0x02) { // "ADD " + operand );
+      } else if (ucode_step == 4) {
+        // AI = A Register In
+        // EO = Sum Out (E looks like sigma)
+        // FI = Flags In
+        console_log ( "Add put in A" );
+        control_word.set_value ( AI | EO | FI );
+        let result = a_reg.get_value() + b_reg.get_value();
+        if (result > 0xff) {
+          carry_bit.set_value ( 1 );
+        } else {
+          carry_bit.set_value ( 0 );
+        }
+        if (result == 0) {
+          zero_bit.set_value ( 1 );
+        } else {
+          zero_bit.set_value ( 0 );
+        }
+        result = result & 0xff;
+        sum_reg.set_value ( result );
+        bus.set_value ( result );
+        a_reg.set_value ( bus.get_value() );
+      } else {
+        control_word.set_value ( 0 );
+      }
+    } else if (operation == 0x03) { // "SUB " + operand );
+      } else if (ucode_step == 4) {
+        // AI = A Register In
+        // EO = Sum Out (E looks like sigma)
+        // FI = Flags In
+        // SU = Subtract Signal
+        console_log ( "Subtract put in A" );
+        control_word.set_value ( AI | EO | FI | SU );
+        let result = a_reg.get_value() - b_reg.get_value();
+        if (result >= 0x00) {
+          carry_bit.set_value ( 1 );
+        } else {
+          carry_bit.set_value ( 0 );
+        }
+        if (result == 0) {
+          zero_bit.set_value ( 1 );
+        } else {
+          zero_bit.set_value ( 0 );
+        }
+        result = result & 0xff;
+        sum_reg.set_value ( result );
+        bus.set_value ( result );
+        a_reg.set_value ( bus.get_value() );
+      } else {
+        control_word.set_value ( 0 );
+      }
+    } else if ...
+    */
   }
 }
 
@@ -840,6 +968,7 @@ class ProgramWrite extends Button { // program_write_button
                      (data_in_DIP_0.get_value() << 0);
       if (mem_addr < memory.length) {
         memory[mem_addr] = data_val;
+        mem_data.set_value(data_val);
       }
     } else {
       console.log ( "Unable to Program in Run Mode - Toggle the Run/Load Button" );
@@ -885,18 +1014,6 @@ class InstructionData extends Register {
 }
 
 
-class MemoryAddress extends Register {
-  constructor (name,nbits) {
-    super("Memory Address",nbits);
-    this.on_color = yellow_on;
-    this.off_color = yellow_off;
-    this.radius = 5;
-    // Note that index 0 corresponds to bit 0 (LSB)
-    this.state = [false,false,false,false];
-    this.position = [ [147,145], [157,146], [166,145], [176,146] ];
-  }
-}
-
 class MemoryData extends Register {
   constructor (name,nbits) {
     super("Memory Address",nbits);
@@ -908,6 +1025,31 @@ class MemoryData extends Register {
     this.position = [ [138,225], [147,225], [156,225], [166,225], [176,225], [187,225], [198,225], [208,225] ];
   }
 }
+
+
+class MemoryAddress extends Register {
+  constructor (name,nbits) {
+    super("Memory Address",nbits);
+    this.on_color = yellow_on;
+    this.off_color = yellow_off;
+    this.radius = 5;
+    // Note that index 0 corresponds to bit 0 (LSB)
+    this.state = [false,false,false,false];
+    this.position = [ [147,145], [157,146], [166,145], [176,146] ];
+    this.data_register = null;
+  }
+  set_data_register ( r ) {
+    this.data_register = r;
+  }
+  set_value ( value ) {
+    super.set_value ( value );
+    if (this.data_register != null) {
+      // Also update the MemoryData associated with this address
+      this.data_register.set_value ( memory[this.get_value()] );
+    }
+  }
+}
+
 
 class BusContents extends Register {
   constructor (name,nbits) {
@@ -996,7 +1138,7 @@ class ExecModeButton extends ToggleButton {
     super ( name, center_x, center_y, w, h );
     this.mode_names  = [  "macro",  "micro1",  "micro2"];
     this.mode_colors = ["#0000ff", "#00ff00", "#ff0000"];
-    this.mode_index  = 1; // micro1
+    this.mode_index  = 2; // micro2
     this.down_color  = this.mode_colors[this.mode_index];
     this.up_color    = this.mode_colors[this.mode_index];
   }
@@ -1084,20 +1226,28 @@ function encode ( instruction ) {
 }
 
 
+bus = new BusContents("Bus", 8);
 clock = new ClockModule("Clock", 1);
 run_prog_mode = new RunProgMode ("Run Mode", 2);
 ucode_ctr = new uCodeCounter("uCode Counter", 3 );
 prog_ctr = new ProgramCounter("Program Counter", 4);
-mem_addr = new MemoryAddress("Memory Address", 4);
 mem_data = new MemoryData("Memory Data", 8);
+mem_addr = new MemoryAddress("Memory Address", 4);
+mem_addr.set_data_register(mem_data);
 inst_op = new InstructionOperation("Instruction Op", 4);
 inst_data = new InstructionData("Instruction Data", 4);
-a_reg = new ARegister("Register A", 8);
-b_reg = new BRegister("Register B", 8);
+
+// Create and connect the a, b, and sum registers
 sum_reg = new SumRegister("Sum", 8);
+a_reg = new ARegister("Register A", 8);
+// a_reg.set_sum_register ( sum_reg );
+// sum_reg.set_a_register ( a_reg );
+b_reg = new BRegister("Register B", 8);
+// b_reg.set_sum_register ( sum_reg );
+// sum_reg.set_b_register ( b_reg );
+
 carry_bit = new CarryRegister("Carry", 1);
 zero_bit = new ZeroRegister("Zero", 1);
-bus = new BusContents("Bus", 8);
 control_word = new ControlWord("Control", 16);
 display_out = new SevenSegmentDisplay("Display", 3);
 
@@ -1107,13 +1257,13 @@ button_list.push ( prog_mode_toggle );
 program_write_button = new ProgramWrite ( "Program Write", 25,267, 20,20, null );
 button_list.push ( program_write_button );
 
-mem_addr_DIP_3 = new DIPSwitch ( "DIP_MA3", 70,111, 3,7, null );
+mem_addr_DIP_3 = new MemDIPSwitch ( "DIP_MA3", 70,111, 3,7, null );
 button_list.push ( mem_addr_DIP_3 );
-mem_addr_DIP_2 = new DIPSwitch ( "DIP_MA2", 74,111, 3,7, null );
+mem_addr_DIP_2 = new MemDIPSwitch ( "DIP_MA2", 74,111, 3,7, null );
 button_list.push ( mem_addr_DIP_2 );
-mem_addr_DIP_1 = new DIPSwitch ( "DIP_MA1", 79,111, 3,7, null );
+mem_addr_DIP_1 = new MemDIPSwitch ( "DIP_MA1", 79,111, 3,7, null );
 button_list.push ( mem_addr_DIP_1 );
-mem_addr_DIP_0 = new DIPSwitch ( "DIP_MA0", 83,111, 3,7, null );
+mem_addr_DIP_0 = new MemDIPSwitch ( "DIP_MA0", 83,111, 3,7, null );
 button_list.push ( mem_addr_DIP_0 );
 
 data_in_DIP_7 = new DIPSwitch ( "DIP_D7", 79,268, 3,7, null );
@@ -1334,7 +1484,24 @@ const CO = 0b0000000000000100; // Program Counter Out
 const J  = 0b0000000000000010; // Jump
 const FI = 0b0000000000000001; // Flags In???
 
-const micro_bit_names = ['HT','MI','RI','RO','IO','II','AI','AO','EO','SU','BI','OI','CE','CO','J'];
+const iFI = 15;
+const iJ  = 14;
+const iCO = 13;
+const iCE = 12;
+const iOI = 11;
+const iBI = 10;
+const iSU = 9;
+const iEO = 8;
+const iAO = 7;
+const iAI = 6;
+const iII = 5;
+const iIO = 4;
+const iRO = 3;
+const iRI = 2;
+const iMI = 1;
+const iHT = 0;
+
+const micro_bit_names = ['HT','MI','RI','RO','IO','II','AI','AO','EO','SU','BI','OI','CE','CO','J','FI'];
 
 
 function console_log ( s ) {
@@ -1400,29 +1567,136 @@ class MicroCodeMachine {
       this.ucode[i][2] = this.ucode[i][2].replaceAll(" ","");
     }
   }
-  get_word_str ( instruction, step, flags ) {
+  matches ( example, template ) {
+    // Determine if the example matches the template
+    // Create a new string from the example
+    let tmatch = "" + example;
+    // Compare up to the common length
+    let len = Math.min(example.length, tmatch.length);
+    for (let i=0; i<len; i++) {
+      if (template.charAt(i).toLowerCase() == 'x') {
+        tmatch = tmatch.substr(0,i) + template.charAt(i) + tmatch.substring(i+1);
+      }
+    }
+    return ( tmatch == template );
+  }
+  get_word_str ( ucode_addr ) {
     // console.log ( "get_word_str called with (" + instruction + "," + step + "," + flags + ")" );
-    let ucode_entry = this.ucode[Math.trunc(Math.random()*this.ucode.length)];
-    let ucode_word = ucode_entry[2];
+    // let ucode_addr = instruction + step + flags;
+    for (let i=0; i<this.ucode.length; i++) {
+      if (this.matches(ucode_addr,this.ucode[i][1])) {
+        return ( this.ucode[i][2] );
+      }
+    }
+    return ( "0000000000000000" ); // Word not found for this instruction/step so do nothing
+
+    //let ucode_entry = this.ucode[Math.trunc(Math.random()*this.ucode.length)];
+    //let ucode_word = ucode_entry[2];
     // console.log ( "Code word = " + ucode_word );
-    return ( ucode_word );
+    //return ( ucode_word );
   }
   exec_next() {
+    // console.log ( "exec_next" );
+    // Do things that should happen automatically
+    sum_reg.update_sum();
+    mem_data.set_value ( memory[mem_addr.get_value()] );
+
     ucode_ctr.update ( clock.get_state() );
     if (clock.get_state()) {
       let ucode_step = ucode_ctr.get_value();
-      let ucode_word = ""
+      console.log ( "executing step " + ucode_step );
+      let uaddr = "";
       if (ucode_step == 0) {
-        let ws = this.get_word_str ( "xxxx", bin3(ucode_step), "xx" );
-        control_word.set_value ( parseInt ( ws, 2 ) );
+        uaddr = "xxxx" + bin3(ucode_step) + "xx";
       } else if (ucode_step == 1) {
-        let ws = this.get_word_str ( "xxxx", bin3(ucode_step), "xx" );
-        control_word.set_value ( parseInt ( ws, 2 ) );
+        uaddr = "xxxx" + bin3(ucode_step) + "xx";
       } else {
-        let ws = this.get_word_str ( "xxxx", bin3(ucode_step), "xx" );
-        control_word.set_value ( parseInt ( ws, 2 ) );
+        // Get the instruction, carry, and zero flags:
+        let inst = inst_op.get_value();
+        let carry = carry_bit.get_value();
+        let zero = carry_bit.get_value();
+        uaddr = bin4(inst) + bin3(ucode_step) + bin1(carry) + bin1(zero);
+      }
+      let uword = this.get_word_str ( uaddr );
+      // console.log ( "uaddr = " + uaddr );
+      console.log ( "uword = " + uword );
+      if (uword == null) {
+        console.log ( " uaddr = " + uaddr );
+      } else {
+        control_word.set_value ( parseInt ( uword, 2 ) );
+        // Get the operations from this control word
+        let operations = [];
+        for (let cwbit=0; cwbit<micro_bit_names.length; cwbit++) {
+          if (uword.charAt(cwbit) == 1) {
+            operations.push ( micro_bit_names[cwbit] );
+          }
+        }
+        console.log ( "Operations = " + operations );
+        // Carry out the selected operations specified in this control word
+        let out_cmds   = ['RO','IO','CO','AO','EO'];
+        let in_cmds    = ['RI','II','MI','AI','BI','OI'];
+        let other_cmds = ['HT','SU','CE','J'];
+        // Set the bus for any output commands while checking for conflicts
+        let already_out = false;
+        for (let i=0; i<out_cmds.length; i++) {
+          if (operations.indexOf(out_cmds[i]) >= 0) {
+            let cmd = out_cmds[i];
+            if (!already_out) {
+              // Set the bus from the desired source
+              console.log ( "Set bus to " + cmd );
+
+              if (cmd == "CO") bus.set_value ( prog_ctr.get_value() );
+              if (cmd == "RO") bus.set_value ( memory[mem_addr.get_value()] );
+              if (cmd == "IO") bus.set_value ( inst_data.get_value() );
+              if (cmd == "AO") bus.set_value ( a_reg.get_value() );
+
+              already_out = true;
+            } else {
+              // There is contention on the bus
+              console.log ( "Bus contention adding " + cmd );
+            }
+          }
+        }
+        // Read from the bus for any input commands
+        for (let i=0; i<in_cmds.length; i++) {
+          if (operations.indexOf(in_cmds[i]) >= 0) {
+            let cmd = in_cmds[i];
+            // Move the value from the bus to the desired destination
+            console.log ( "Move bus to " + cmd );
+
+            if (cmd == "MI") mem_addr.set_value ( bus.get_value() );
+            if (cmd == "RI") memory[mem_addr.get_value()] = bus.get_value();
+            if (cmd == "AI") a_reg.set_value ( bus.get_value() );
+            if (cmd == "BI") b_reg.set_value ( bus.get_value() );
+            if (cmd == "OI") {
+              display_out.set_value ( bus.get_value() );
+              display_out.set_digits ( String(bus.get_value()) );
+            }
+            if (cmd == "II") {
+              let instruction = bus.get_value();
+              inst_op.set_value ( (instruction >> 4) & 0x0f );
+              inst_data.set_value ( instruction & 0x0f );
+            }
+
+          }
+        }
+        // Perform any additional commands
+        for (let i=0; i<other_cmds.length; i++) {
+          if (operations.indexOf(other_cmds[i]) >= 0) {
+            let cmd = other_cmds[i];
+            // Carry out the operation
+            console.log ( "Handle " + cmd );
+
+            if (cmd == "CE") prog_ctr.set_value ( (prog_ctr.get_value() + 1) % 16 );
+            if (cmd == "J") prog_ctr.set_value ( bus.get_value() );
+
+          }
+        }
       }
     }
+    // Do things again that should happen automatically
+    sum_reg.update_sum();
+    mem_data.set_value ( memory[mem_addr.get_value()] );
   }
 }
 
@@ -2157,6 +2431,7 @@ Source Code<br/>
 <select id="examples" onchange="change_example()">
 <option value="Examples">Examples</option>
 <option value="NOP HLT">NOP HLT</option>
+<option value="Add Sub">Add Sub</option>
 <option value="Add 14+28">Add 14+28</option>
 <option value="Counter">Counter</option>
 <option value="CountUpDown">Count U/D</option>
