@@ -780,8 +780,9 @@ class SumRegister extends Register {
     this.b_register = null;
   }
   update_sum() {
-    // console.log ( "Sum sub=" + control_word.state[iSU] );
+    // console.log ( "CW[SU] = " + control_word.state[iSU] );
     if (control_word.state[iSU]) {
+      // console.log ( "Subtracting" );
       // Subtract
       let result = a_reg.get_value() - b_reg.get_value();
       if (result >= 0x00) {
@@ -798,6 +799,7 @@ class SumRegister extends Register {
       this.set_value ( result );
       // a_reg.set_value ( bus.get_value() );
     } else {
+      // console.log ( "Adding" );
       // Add
       let result = a_reg.get_value() + b_reg.get_value();
       if (result > 0xff) {
@@ -1530,10 +1532,10 @@ class MicroCodeMachine {
       ["ADD", "0010 011 xx", "00010000 00100000"],
       ["ADD", "0010 100 xx", "00000010 10000001"],
 
-      ["SUB", "0011 010 xx", "01001000 00000000"], // MI IO
-      ["SUB", "0011 011 xx", "00010000 00100000"], // RO BI  // Add SU here? Race?
+      ["SUB", "0011 010 xx", "01001000 01000000"], // MI IO
+      ["SUB", "0011 011 xx", "00010000 01100000"], // RO BI  // Add SU here? Race?
       ["SUB", "0011 100 xx", "00000010 11000001"], // AI E0 SU FI
-    //["SUB", "0011 101 xx", "00000000 01000000"], // Attempt to keep SU active?
+      ["SUB", "0011 101 xx", "00000000 01000000"], // Attempt to keep SU active?
 
       ["STA", "0100 010 xx", "01001000 00000000"],
       ["STA", "0100 011 xx", "00100001 00000000"],
@@ -1602,6 +1604,7 @@ class MicroCodeMachine {
   exec_next() {
     // console.log ( "exec_next" );
     // Do things that should happen automatically
+    // console.log ( "Call update_sum" );
     sum_reg.update_sum();
     mem_data.set_value ( memory[mem_addr.get_value()] );
 
@@ -1625,7 +1628,7 @@ class MicroCodeMachine {
       // console.log ( "uaddr = " + uaddr );
       // console.log ( "uword = " + uword );
       if (uword == null) {
-        console.log ( " uaddr = " + uaddr );
+        // console.log ( " uaddr = " + uaddr );
       } else {
         control_word.set_value ( parseInt ( uword, 2 ) );
         // Get the operations from this control word
@@ -1649,7 +1652,7 @@ class MicroCodeMachine {
             let cmd = out_cmds[i];
             if (!already_out) {
               // Set the bus from the desired source
-              console.log ( "Set bus to " + cmd );
+              // console.log ( "Set bus to " + cmd );
 
               if (cmd == "CO") bus.set_value ( prog_ctr.get_value() );
               if (cmd == "RO") bus.set_value ( memory[mem_addr.get_value()] );
@@ -1673,7 +1676,7 @@ class MicroCodeMachine {
           if (operations.indexOf(in_cmds[i]) >= 0) {
             let cmd = in_cmds[i];
             // Move the value from the bus to the desired destination
-            console.log ( "Move bus to " + cmd );
+            // console.log ( "Move bus to " + cmd );
 
             if (cmd == "MI") mem_addr.set_value ( bus.get_value() );
             if (cmd == "RI") memory[mem_addr.get_value()] = bus.get_value();
@@ -1688,6 +1691,7 @@ class MicroCodeMachine {
             if (cmd == "OI") {
               display_out.set_value ( bus.get_value() );
               display_out.set_digits ( String(bus.get_value()) );
+              console.log ( "Out: " + String(bus.get_value()) );
             }
             if (cmd == "II") {
               let instruction = bus.get_value();
@@ -1703,7 +1707,7 @@ class MicroCodeMachine {
           if (operations.indexOf(other_cmds[i]) >= 0) {
             let cmd = other_cmds[i];
             // Carry out the operation
-            console.log ( "Handle " + cmd );
+            // console.log ( "Handle " + cmd );
 
             if (cmd == "HT") { /* Just a signal? */ };
             if (cmd == "CE") prog_ctr.set_value ( (prog_ctr.get_value() + 1) % 16 );
