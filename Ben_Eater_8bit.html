@@ -227,7 +227,7 @@ class Register {
     return ( this.state );
   }
   get_bit ( index ) {
-    if ((index > 0) && (index < this.state.length)) {
+    if ((index >= 0) && (index < this.state.length)) {
       return ( this.state[index] );
     } else {
       return ( null );
@@ -780,7 +780,7 @@ class SumRegister extends Register {
     this.b_register = null;
   }
   update_sum() {
-    console.log ( "Sum sub=" + control_word.state[iSU] );
+    // console.log ( "Sum sub=" + control_word.state[iSU] );
     if (control_word.state[iSU]) {
       // Subtract
       let result = a_reg.get_value() - b_reg.get_value();
@@ -1501,6 +1501,7 @@ const iRI = 2;
 const iMI = 1;
 const iHT = 0;
 
+// Note that the "I" and "O" mean "in from the bus" and "out to the bus" respectively.
 const micro_bit_names = ['HT','MI','RI','RO','IO','II','AI','AO','EO','SU','BI','OI','CE','CO','J','FI'];
 
 
@@ -1511,7 +1512,9 @@ function console_log ( s ) {
 class MicroCodeMachine {
   constructor() {
     this.ucode = [
-      //Inst      State         Control Word
+      //Inst   9 bit State   16 bit Control Word
+      //                      HMRRIIAA ESBOCCJF
+      //       inst stp CZ    TIIOOIIO OUIIEO I
       ["FCH", "xxxx 000 xx", "01000000 00000100"],
       ["FCH", "xxxx 001 xx", "00010100 00001000"],
 
@@ -1527,9 +1530,10 @@ class MicroCodeMachine {
       ["ADD", "0010 011 xx", "00010000 00100000"],
       ["ADD", "0010 100 xx", "00000010 10000001"],
 
-      ["SUB", "0011 010 xx", "01001000 00000000"],
-      ["SUB", "0011 011 xx", "00010000 00100000"],
-      ["SUB", "0011 100 xx", "00000010 11000001"],
+      ["SUB", "0011 010 xx", "01001000 00000000"], // MI IO
+      ["SUB", "0011 011 xx", "00010000 00100000"], // RO BI
+      ["SUB", "0011 100 xx", "00000010 11000001"], // AI E0 SU FI
+    //["SUB", "0011 101 xx", "00000000 01000000"], // Attempt to keep SU active?
 
       ["STA", "0100 010 xx", "01001000 00000000"],
       ["STA", "0100 011 xx", "00100001 00000000"],
@@ -1561,7 +1565,7 @@ class MicroCodeMachine {
       ["HLT", "1111 011 xx", "00000000 00000000"],
       ["HLT", "1111 100 xx", "00000000 00000000"]
     ];
-    // Remove spaces from ucode
+    // Remove spaces from ucode strings
     for (let i=0; i<this.ucode.length; i++) {
       this.ucode[i][1] = this.ucode[i][1].replaceAll(" ","");
       this.ucode[i][2] = this.ucode[i][2].replaceAll(" ","");
@@ -1604,7 +1608,7 @@ class MicroCodeMachine {
     ucode_ctr.update ( clock.get_state() );
     if (clock.get_state()) {
       let ucode_step = ucode_ctr.get_value();
-      console.log ( "executing step " + ucode_step );
+      // console.log ( "executing step " + ucode_step );
       let uaddr = "";
       if (ucode_step == 0) {
         uaddr = "xxxx" + bin3(ucode_step) + "xx";
@@ -1619,7 +1623,7 @@ class MicroCodeMachine {
       }
       let uword = this.get_word_str ( uaddr );
       // console.log ( "uaddr = " + uaddr );
-      console.log ( "uword = " + uword );
+      // console.log ( "uword = " + uword );
       if (uword == null) {
         console.log ( " uaddr = " + uaddr );
       } else {
@@ -1631,12 +1635,13 @@ class MicroCodeMachine {
             operations.push ( micro_bit_names[cwbit] );
           }
         }
-        console.log ( "Operations = " + operations );
+        // console.log ( "Operations = " + operations );
         // Carry out the selected operations specified in this control word
         let out_cmds   = ['RO','IO','CO','AO','EO'];
         let in_cmds    = ['RI','II','MI','AI','BI','OI'];
         let other_cmds = ['HT','SU','CE','J','FI'];
         // Set the bus for any output commands while checking for conflicts
+        // Output Commands: RO IO CO AO EO
         let already_out = false;
         let last_out = "";
         for (let i=0; i<out_cmds.length; i++) {
@@ -1650,6 +1655,7 @@ class MicroCodeMachine {
               if (cmd == "RO") bus.set_value ( memory[mem_addr.get_value()] );
               if (cmd == "IO") bus.set_value ( inst_data.get_value() );
               if (cmd == "AO") bus.set_value ( a_reg.get_value() );
+              if (cmd == "EO") bus.set_value ( sum_reg.get_value() );
 
               last_out = cmd;
               already_out = true;
@@ -1662,6 +1668,7 @@ class MicroCodeMachine {
           }
         }
         // Read from the bus for any input commands
+        //  Input Commands: RI II MI AI BI OI
         for (let i=0; i<in_cmds.length; i++) {
           if (operations.indexOf(in_cmds[i]) >= 0) {
             let cmd = in_cmds[i];
@@ -1670,8 +1677,14 @@ class MicroCodeMachine {
 
             if (cmd == "MI") mem_addr.set_value ( bus.get_value() );
             if (cmd == "RI") memory[mem_addr.get_value()] = bus.get_value();
-            if (cmd == "AI") a_reg.set_value ( bus.get_value() );
-            if (cmd == "BI") b_reg.set_value ( bus.get_value() );
+            if (cmd == "AI") {
+              a_reg.set_value ( bus.get_value() );
+              sum_reg.update_sum();
+            }
+            if (cmd == "BI") {
+              b_reg.set_value ( bus.get_value() );
+              sum_reg.update_sum();
+            }
             if (cmd == "OI") {
               display_out.set_value ( bus.get_value() );
               display_out.set_digits ( String(bus.get_value()) );
@@ -1685,14 +1698,18 @@ class MicroCodeMachine {
           }
         }
         // Perform any additional commands
+        //  Additional Commands: HT SU CE J FI
         for (let i=0; i<other_cmds.length; i++) {
           if (operations.indexOf(other_cmds[i]) >= 0) {
             let cmd = other_cmds[i];
             // Carry out the operation
             console.log ( "Handle " + cmd );
 
+            if (cmd == "HT") { /* Just a signal? */ };
             if (cmd == "CE") prog_ctr.set_value ( (prog_ctr.get_value() + 1) % 16 );
             if (cmd == "J") prog_ctr.set_value ( bus.get_value() );
+            if (cmd == "SU") { /* Just a signal? */ };
+            if (cmd == "FI") { /* Just a signal? */ };
 
           }
         }
@@ -1701,6 +1718,11 @@ class MicroCodeMachine {
     // Do things again that should happen automatically
     sum_reg.update_sum();
     mem_data.set_value ( memory[mem_addr.get_value()] );
+
+    if (control_word.get_bit(iHT)) {
+      clock.stop();
+      stop();
+    }
   }
 }
 
