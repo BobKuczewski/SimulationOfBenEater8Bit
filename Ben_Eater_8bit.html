@@ -1614,7 +1614,7 @@ class MicroCodeMachine {
         // Get the instruction, carry, and zero flags:
         let inst = inst_op.get_value();
         let carry = carry_bit.get_value();
-        let zero = carry_bit.get_value();
+        let zero = zero_bit.get_value();
         uaddr = bin4(inst) + bin3(ucode_step) + bin1(carry) + bin1(zero);
       }
       let uword = this.get_word_str ( uaddr );
@@ -1635,9 +1635,10 @@ class MicroCodeMachine {
         // Carry out the selected operations specified in this control word
         let out_cmds   = ['RO','IO','CO','AO','EO'];
         let in_cmds    = ['RI','II','MI','AI','BI','OI'];
-        let other_cmds = ['HT','SU','CE','J'];
+        let other_cmds = ['HT','SU','CE','J','FI'];
         // Set the bus for any output commands while checking for conflicts
         let already_out = false;
+        let last_out = "";
         for (let i=0; i<out_cmds.length; i++) {
           if (operations.indexOf(out_cmds[i]) >= 0) {
             let cmd = out_cmds[i];
@@ -1650,10 +1651,13 @@ class MicroCodeMachine {
               if (cmd == "IO") bus.set_value ( inst_data.get_value() );
               if (cmd == "AO") bus.set_value ( a_reg.get_value() );
 
+              last_out = cmd;
               already_out = true;
             } else {
               // There is contention on the bus
-              console.log ( "Bus contention adding " + cmd );
+              console.log ( "#####################################" );
+              console.log ( "  Bus contention between " + cmd + " and " + last_cmd );
+              console.log ( "#####################################" );
             }
           }
         }
