@@ -187,15 +187,29 @@ function change_example() {
   } else if (document.getElementById("examples").value == "Mult 3x5") {
     document.getElementById("Source Code").value =
       "0 lda e\n1 sub c\n2 jc 6\n3 lda d\n4 out\n5 hlt\n6 sta e\n7 lda d\n" +
-      "8 add f\n9 sta d\na jmp 0\nb 0\nc 1\nd 0\ne 3\nf 5\n";
+      "8 add f\n9 sta d\na jmp 0\nb 0\nc 1\nd 0\ne 3 ; Multiply this\nf 5 ; by this\n";
   } else if (document.getElementById("examples").value == "Mult 7x8") {
     document.getElementById("Source Code").value =
       "0 LDA E\n1 SUB C\n2 JC 6\n3 LDA D\n4 OUT\n5 HLT\n6 STA E\n7 LDA D\n" +
-      "8 ADD F\n9 STA D\nA JMP 0\nB 0\nC 1\nD 0\nE 7\nF 8\n"
+      "8 ADD F\n9 STA D\nA JMP 0\nB 0\nC 1\nD 0\nE 7 ; Multiply this\nF 8 ; by this\n"
   } else if (document.getElementById("examples").value == "Mult 15x15") {
     document.getElementById("Source Code").value =
-      "0 LDA E\n1 SUB C\n2 JC 6\n3 LDA D\n4 OUT\n5 HLT\n6 STA E\n7 LDA D\n" +
-      "8 ADD F\n9 STA D\nA JMP 0\nB 0\nC 1\nD 0\nE F\nF F\n"
+      "0 LDA E\n" +
+      "1 SUB C\n" +
+      "2 JC 6\n" +
+      "3 LDA D\n" +
+      "4 OUT\n" +
+      "5 HLT\n" +
+      "6 STA E\n" +
+      "7 LDA D\n" +
+      "8 ADD F\n" +
+      "9 STA D\n" +
+      "A JMP 0\n" +
+      "B 0\n" +
+      "C 1\n" +
+      "D 0\n" +
+      "E F ; Multiply this\n" +
+      "F F ; by this\n"
   }
   display_status();
   update_canvas();
@@ -789,9 +803,9 @@ class SumRegister extends Register {
     this.b_register = null;
   }
   update_sum() {
-    // console.log ( "CW[SU] = " + control_word.state[iSU] );
+    console_log ( "CW[SU] = " + control_word.state[iSU] );
     if (control_word.state[iSU]) {
-      // console.log ( "Subtracting" );
+      console_log ( "Subtracting" );
       // Subtract
       let result = a_reg.get_value() - b_reg.get_value();
       if (result >= 0x00) {
@@ -808,7 +822,7 @@ class SumRegister extends Register {
       this.set_value ( result );
       // a_reg.set_value ( bus.get_value() );
     } else {
-      // console.log ( "Adding" );
+      console_log ( "Adding" );
       // Add
       let result = a_reg.get_value() + b_reg.get_value();
       if (result > 0xff) {
@@ -1526,7 +1540,9 @@ const micro_bit_names = ['HT','MI','RI','RO','IO','II','AI','AO','EO','SU','BI',
 
 
 function console_log ( s ) {
-  // console.log ( s );
+  if (debugging) {
+    console.log ( s );
+  }
 }
 
 class MicroCodeMachine {
@@ -1605,7 +1621,7 @@ class MicroCodeMachine {
     return ( tmatch == template );
   }
   get_word_str ( ucode_addr ) {
-    // console.log ( "get_word_str called with (" + instruction + "," + step + "," + flags + ")" );
+    console_log ( "get_word_str called with (" + instruction + "," + step + "," + flags + ")" );
     // let ucode_addr = instruction + step + flags;
     for (let i=0; i<this.ucode.length; i++) {
       if (this.matches(ucode_addr,this.ucode[i][1])) {
@@ -1616,20 +1632,20 @@ class MicroCodeMachine {
 
     //let ucode_entry = this.ucode[Math.trunc(Math.random()*this.ucode.length)];
     //let ucode_word = ucode_entry[2];
-    // console.log ( "Code word = " + ucode_word );
+    console_log ( "Code word = " + ucode_word );
     //return ( ucode_word );
   }
   exec_next() {
-    // console.log ( "exec_next" );
+    console_log ( "exec_next" );
     // Do things that should happen automatically
-    // console.log ( "Call update_sum" );
+    console_log ( "Call update_sum" );
     sum_reg.update_sum();
     mem_data.set_value ( memory[mem_addr.get_value()] );
 
     ucode_ctr.update ( clock.get_state() );
     if (clock.get_state()) {
       let ucode_step = ucode_ctr.get_value();
-      // console.log ( "executing step " + ucode_step );
+      console_log ( "executing step " + ucode_step );
       let uaddr = "";
       if (ucode_step == 0) {
         uaddr = "xxxx" + bin3(ucode_step) + "xx";
@@ -1643,10 +1659,10 @@ class MicroCodeMachine {
         uaddr = bin4(inst) + bin3(ucode_step) + bin1(carry) + bin1(zero);
       }
       let uword = this.get_word_str ( uaddr );
-      // console.log ( "uaddr = " + uaddr );
-      // console.log ( "uword = " + uword );
+      console_log ( "uaddr = " + uaddr );
+      console_log ( "uword = " + uword );
       if (uword == null) {
-        // console.log ( " uaddr = " + uaddr );
+        console_log ( " uaddr = " + uaddr );
       } else {
         control_word.set_value ( parseInt ( uword, 2 ) );
         // Get the operations from this control word
@@ -1656,7 +1672,7 @@ class MicroCodeMachine {
             operations.push ( micro_bit_names[cwbit] );
           }
         }
-        // console.log ( "Operations = " + operations );
+        console_log ( "Operations = " + operations );
         // Carry out the selected operations specified in this control word
         let out_cmds   = ['RO','IO','CO','AO','EO'];
         let in_cmds    = ['RI','II','MI','AI','BI','OI'];
@@ -1681,7 +1697,7 @@ class MicroCodeMachine {
             let cmd = out_cmds[i];
             if (!already_out) {
               // Set the bus from the desired source
-              // console.log ( "Set bus to " + cmd );
+              console_log ( "Set bus to " + cmd );
 
               if (cmd == "CO") bus.set_value ( prog_ctr.get_value() );
               if (cmd == "RO") bus.set_value ( memory[mem_addr.get_value()] );
@@ -1712,7 +1728,7 @@ class MicroCodeMachine {
           if (operations.indexOf(in_cmds[i]) >= 0) {
             let cmd = in_cmds[i];
             // Move the value from the bus to the desired destination
-            // console.log ( "Move bus to " + cmd );
+            console_log ( "Move bus to " + cmd );
 
             if (cmd == "MI") mem_addr.set_value ( bus.get_value() );
             if (cmd == "RI") memory[mem_addr.get_value()] = bus.get_value();
@@ -1745,7 +1761,7 @@ class MicroCodeMachine {
           if (operations.indexOf(other_cmds[i]) >= 0) {
             let cmd = other_cmds[i];
             // Carry out the operation
-            // console.log ( "Handle " + cmd );
+            console_log ( "Handle " + cmd );
 
             if (cmd == "HT") { /* Just a signal? */ };
             if (cmd == "CE") prog_ctr.set_value ( (prog_ctr.get_value() + 1) % 16 );
@@ -1787,13 +1803,13 @@ function exec_next() {
   clock.half_tick();
 
   if (execution_mode.get_mode_name() == "micro2") {
-    // console.log ( "micro2" + " mode" );
-    // console.log ( "micro2 not implemented yet" );
+    console_log ( "micro2" + " mode" );
+    console_log ( "micro2 not implemented yet" );
     // control_word.randomize_bits();
     microcode_machine.exec_next();
   } else if (execution_mode.get_mode_name() == "micro1") {
     // Execucte micro instructions step by step
-    // console.log ( "micro1" + " mode" );
+    console_log ( "micro1" + " mode" );
     ucode_ctr.update ( clock.get_state() );
     if (clock.get_state()) {
       let ucode_step = ucode_ctr.get_value();
@@ -2063,7 +2079,7 @@ function exec_next() {
     }
 
   } else if (execution_mode.get_mode_name() == "macro") {
-    // console.log ( "macro" + " mode" );
+    console_log ( "macro" + " mode" );
 
     // Execute macro instructions
 
@@ -2493,7 +2509,7 @@ Processor<br/>
 <center>
 Hex Code<br/>
 <button type="button" onclick="load_hex()">Load</button><br/>
-<textarea id="Hex Code" rows="20" cols="8">51
+<textarea id="Hex Code" rows="20" cols="3">51
 4E
 50
 2E
@@ -2517,7 +2533,7 @@ E0
 <center>
 Source Code<br/>
 <button type="button" onclick="assemble()">Assemble</button><br/>
-<textarea id="Source Code" rows="20" cols="12">0 LDI 1
+<textarea id="Source Code" rows="20" cols="20">0 LDI 1
 1 STA E
 2 LDI 0
 3 ADD E
