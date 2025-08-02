@@ -1621,18 +1621,21 @@ class MicroCodeMachine {
     return ( tmatch == template );
   }
   get_word_str ( ucode_addr ) {
-    console_log ( "get_word_str called with (" + instruction + "," + step + "," + flags + ")" );
+    console_log ( "Code addr = " + ucode_addr );
+    // console_log ( "get_word_str called with (" + instruction + "," + step + "," + flags + ")" );
     // let ucode_addr = instruction + step + flags;
     for (let i=0; i<this.ucode.length; i++) {
       if (this.matches(ucode_addr,this.ucode[i][1])) {
+        console_log ( "Code word = " + this.ucode[i][2] );
         return ( this.ucode[i][2] );
       }
     }
+    console_log ( "Code word = 0000000000000000" );
     return ( "0000000000000000" ); // Word not found for this instruction/step so do nothing
 
     //let ucode_entry = this.ucode[Math.trunc(Math.random()*this.ucode.length)];
     //let ucode_word = ucode_entry[2];
-    console_log ( "Code word = " + ucode_word );
+    // console_log ( "Code word = " + ucode_word );
     //return ( ucode_word );
   }
   exec_next() {
@@ -2187,7 +2190,7 @@ function exec_next() {
       bus.randomize_bits();
       if (upper != 0x0f) { // "FX" Halt instruction ("HLT")
         // Show a random word when not halted
-        control_word.randomize_bits();
+        // control_word.randomize_bits();
       }
       // Increment the program counter as needed
       pc = (pc + 1) % 16;
@@ -2323,7 +2326,7 @@ function SUB_test_passed(i,j) {
 
 function processor_test() {
   // This function can test execution of instructions
-  execution_mode.set_mode ( "micro1" ); // macro micro1 micro1 (Note: tests currently only pass using micro1)
+  execution_mode.set_mode ( "micro1" ); // macro micro1 micro2 (Note: tests currently only pass using micro1)
 
   let passed = false;
 
@@ -2469,6 +2472,27 @@ function run_stop_callback() {
 	update_canvas();
 }
 
+function on_help_change() {
+  // window.alert ( "Help changed" );
+
+	let selector = document.getElementById("show_help");
+	let setting = selector[selector.selectedIndex].value;
+	console_log ( "Help setting = " + setting );
+	let n = selector.options.length;
+	console_log ( "There are " + n + " options" );
+	for (let i=0; i<n; i++) {
+	  let ith_id = selector.options[i].value;
+	  if (ith_id == setting) {
+	    console_log ( "Setting " + ith_id + ".hidden = false" );
+	    document.getElementById(ith_id).hidden = false;
+	  } else {
+	    console_log ( "Setting " + ith_id + ".hidden = true" );
+	    document.getElementById(ith_id).hidden = true;
+	  }
+	}
+}
+
+
 window.onload = setup_canvas;
 
 setup_canvas();
@@ -2495,7 +2519,6 @@ setup_canvas();
 Processor<br/>
 <button type="button" onclick="run_stop_callback();" id="RunStop" style="background-color: #99FF99;">Run/<u>Stop</u></button>
 <button type="button" onclick="reset_callback();">Reset</button>
-
 </center>
 <!-- <pre>-----------------</pre> -->
 <pre id="next_instruction">Next goes here.
@@ -2571,10 +2594,34 @@ F 0</textarea>
 
 </tr>
 </table>
+</center>
+
 
 <hr/>
-Instruction Set (a=address, v=value, x=don't care)
+<center><span id="info_title">Additional Information</span> &nbsp; &nbsp; &nbsp; &nbsp; 
+<select id="show_help" onchange="on_help_change()">
+<option value="none" selected>-- Select --</option>
+<option value="introduction">Introduction</option>
+<option value="instruction_set">Instruction Set</option>
+</select>
+<button type="button" onclick="on_help_change();">Load</button><center>
 <hr/>
+
+
+
+<div id="none" hidden></div>
+<div id="introduction" hidden>
+<center>
+<h3>Introduction</h3>
+</center>
+This simulation attempts to replicate the operation of <b><a href="https://eater.net/8bit">Ben Eater's 8-bit Computer</a></b>.
+This simulation contains buttons and dip switches similar to those on Ben's computer.
+</div>
+
+<div id="instruction_set" hidden>
+<center>
+<h3>Instruction Set (a=address, v=value, x=don't care)</h3>
+</center>
 <table>
 <tr><td><b>Name</b></td><td><b>Hex</b></td><td><b>Binary</b></td><td><b>Description</b></td></tr>
 <tr><td>NOP</td><td>0x</td><td>0000 xxxx</td><td>No operation (does nothing)</td></tr>
@@ -2594,6 +2641,7 @@ Instruction Set (a=address, v=value, x=don't care)
 <tr><td>OUT</td><td>Ex</td><td>1110 xxxx</td><td>Output to LED panel (could use XXXX for In/Out channels)</td></tr>
 <tr><td>HLT</td><td>Fx</td><td>1111 xxxx</td><td>Halt (could use XXXX for other instructions, push, pop, chs, etc.)</td></tr>
 </table>
+</div>
 
 </body>
 </html>
