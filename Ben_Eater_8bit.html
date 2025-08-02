@@ -7,7 +7,7 @@
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
 <script>
-console_output = false;
+debugging = false;
 
 var memory = [ // Fibonacci Numbers up to 233
 /* 0 */ 0x51,  // ldi 1   ; 1
@@ -201,13 +201,14 @@ function change_example() {
   update_canvas();
 }
 
-function console_output_toggle() {
-  console_output = document.getElementById("Console Out").checked;
-  if (console_output) {
-    console.log ( "Console Output Enabled" );
+function toggle_debugging() {
+  debugging = document.getElementById("Debugging").checked;
+  if (debugging) {
+    console.log ( "Debugging Enabled" );
   } else {
-    console.log ( "Console Output Disabled" );
+    console.log ( "Debugging Disabled" );
   }
+  update_canvas();
 }
 
 var gray_on = "#cccccc";
@@ -1148,9 +1149,10 @@ class ExecModeButton extends ToggleButton {
     super ( name, center_x, center_y, w, h );
     this.mode_names  = [  "macro",  "micro1",  "micro2"];
     this.mode_colors = ["#0000ff", "#00ff00", "#ff0000"];
-    this.mode_index  = 2; // micro2
+    this.mode_index  = 1; // micro1  ...  had been micro2
     this.down_color  = this.mode_colors[this.mode_index];
     this.up_color    = this.mode_colors[this.mode_index];
+    this.enabled     = false;
   }
   set_mode ( mode_name ) {
     let i = this.mode_names.indexOf(mode_name);
@@ -1166,16 +1168,24 @@ class ExecModeButton extends ToggleButton {
     return ( this.mode_names[this.mode_index] );
   }
   mouse_down ( event ) {
-    // console.log ( "Exec Mode change from " + this.mode_index );
-    if (this.event_in_button(event)) {
-      this.down = !this.down;
-      this.mode_index += 1;
-      if (this.mode_index >= this.mode_colors.length) {
-        this.mode_index = 0;
+    if (debugging) {
+      if (this.event_in_button(event)) {
+        console.log ( "Exec Mode change from " + this.mode_index );
+        this.down = !this.down;
+        this.mode_index += 1;
+        if (this.mode_index >= this.mode_colors.length) {
+          this.mode_index = 0;
+        }
+        this.down_color  = this.mode_colors[this.mode_index];
+        this.up_color    = this.mode_colors[this.mode_index];
+        update_canvas();
+        console.log ( "  to " + this.mode_index );
       }
-      this.down_color  = this.mode_colors[this.mode_index];
-      this.up_color    = this.mode_colors[this.mode_index];
-      update_canvas();
+    }
+  }
+  draw(ctxt) {
+    if (debugging) {
+      super.draw(ctxt);
     }
   }
 }
@@ -1717,7 +1727,7 @@ class MicroCodeMachine {
             if (cmd == "OI") {
               display_out.set_value ( bus.get_value() );
               display_out.set_digits ( String(bus.get_value()) );
-              if (console_output) {
+              if (debugging) {
                 console.log ( "Out: " + String(bus.get_value()) );
               }
             }
@@ -2035,7 +2045,7 @@ function exec_next() {
             control_word.set_value ( AO | OI );
             bus.set_value ( a_reg.get_value() );
             display_out.set_value ( bus.get_value() );
-            if (console_output) {
+            if (debugging) {
               console.log ( "OUT: " + bus.get_value() );
             }
             display_out.set_digits ( String(bus.get_value()) );
@@ -2149,7 +2159,7 @@ function exec_next() {
       } else if (upper == 0x0d) { // "?0D " + lower );
       } else if (upper == 0x0e) { // "OUT " + lower );
         // Display the A Register as output
-        if (console_output) {
+        if (debugging) {
           console.log ( "Out = " + a_reg.get_value() );
         }
         display_out.set_digits ( String(a_reg.get_value()) );
@@ -2454,7 +2464,7 @@ setup_canvas();
 <body id='page' onload="setup_canvas()" onresize="update_canvas()" bgcolor="lightblue">
 
 <center>
-<b>Simulation of Ben Eater's 8-bit Computer</b><br/>
+<b>Simulation of <a href="https://eater.net/8bit">Ben Eater's 8-bit Computer</a></b><br/>
 
 <table>
 
@@ -2539,7 +2549,7 @@ F 0</textarea>
 
 <!-- <option value="Multiply">Multiply: E x F</option> May not work yet -->
 </select>
-<br/><input type="checkbox" id="Console Out" onclick="console_output_toggle();">Console
+<br/><input type="checkbox" id="Debugging" onclick="toggle_debugging();">Debug
 </center>
 </td>
 
