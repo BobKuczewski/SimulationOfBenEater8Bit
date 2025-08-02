@@ -3,11 +3,11 @@
 <html>
 
 <head>
-<title>Ben Eater's 8-bit Computer Simulation</title>
+<title>Ben Eater's 8-bit Computer: Simulation</title>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
 <script>
-
+console_output = false;
 
 var memory = [ // Fibonacci Numbers up to 233
 /* 0 */ 0x51,  // ldi 1   ; 1
@@ -201,6 +201,14 @@ function change_example() {
   update_canvas();
 }
 
+function console_output_toggle() {
+  console_output = document.getElementById("Console Out").checked;
+  if (console_output) {
+    console.log ( "Console Output Enabled" );
+  } else {
+    console.log ( "Console Output Disabled" );
+  }
+}
 
 var gray_on = "#cccccc";
 var gray_off = "#444444";
@@ -1709,7 +1717,9 @@ class MicroCodeMachine {
             if (cmd == "OI") {
               display_out.set_value ( bus.get_value() );
               display_out.set_digits ( String(bus.get_value()) );
-              console.log ( "Out: " + String(bus.get_value()) );
+              if (console_output) {
+                console.log ( "Out: " + String(bus.get_value()) );
+              }
             }
             if (cmd == "II") {
               let instruction = bus.get_value();
@@ -2025,7 +2035,9 @@ function exec_next() {
             control_word.set_value ( AO | OI );
             bus.set_value ( a_reg.get_value() );
             display_out.set_value ( bus.get_value() );
-            console.log ( "OUT: " + bus.get_value() );
+            if (console_output) {
+              console.log ( "OUT: " + bus.get_value() );
+            }
             display_out.set_digits ( String(bus.get_value()) );
           } else {
             control_word.set_value ( 0 );
@@ -2137,7 +2149,9 @@ function exec_next() {
       } else if (upper == 0x0d) { // "?0D " + lower );
       } else if (upper == 0x0e) { // "OUT " + lower );
         // Display the A Register as output
-        console.log ( "Out = " + a_reg.get_value() );
+        if (console_output) {
+          console.log ( "Out = " + a_reg.get_value() );
+        }
         display_out.set_digits ( String(a_reg.get_value()) );
       } else if (upper == 0x0f) { // "FX" Halt instruction ("HLT")
         control_word.set_value ( HT );
@@ -2439,6 +2453,9 @@ setup_canvas();
 
 <body id='page' onload="setup_canvas()" onresize="update_canvas()" bgcolor="lightblue">
 
+<center>
+<b>Simulation of Ben Eater's 8-bit Computer</b><br/>
+
 <table>
 
 <tr>
@@ -2466,7 +2483,22 @@ Processor<br/>
 <center>
 Hex Code<br/>
 <button type="button" onclick="load_hex()">Load</button><br/>
-<textarea id="Hex Code" rows="20" cols="8"></textarea><br/>
+<textarea id="Hex Code" rows="20" cols="8">51
+4E
+50
+2E
+4F
+1E
+4D
+1F
+4E
+1D
+E0
+70
+63
+00
+00
+00</textarea><br/>
 <button type="button" onclick="zero_hex()">Zeros</button><br/>
 </center>
 </td>
@@ -2475,7 +2507,22 @@ Hex Code<br/>
 <center>
 Source Code<br/>
 <button type="button" onclick="assemble()">Assemble</button><br/>
-<textarea id="Source Code" rows="20" cols="12"></textarea>
+<textarea id="Source Code" rows="20" cols="12">0 LDI 1
+1 STA E
+2 LDI 0
+3 ADD E
+4 STA F
+5 LDA E
+6 STA D
+7 LDA F
+8 STA E
+9 LDA D
+A OUT
+B JC 0
+C JMP 3
+D 0
+E 0
+F 0</textarea>
 <br/>
 <select id="examples" onchange="change_example()">
 <option value="Examples">Examples</option>
@@ -2492,15 +2539,14 @@ Source Code<br/>
 
 <!-- <option value="Multiply">Multiply: E x F</option> May not work yet -->
 </select>
+<br/><input type="checkbox" id="Console Out" onclick="console_output_toggle();">Console
 </center>
 </td>
 
 </tr>
 </table>
 
-
 <hr/>
-<center>
 Instruction Set (a=address, v=value, x=don't care)
 <hr/>
 <table>
@@ -2522,9 +2568,7 @@ Instruction Set (a=address, v=value, x=don't care)
 <tr><td>OUT</td><td>Ex</td><td>1110 xxxx</td><td>Output to LED panel (could use XXXX for In/Out channels)</td></tr>
 <tr><td>HLT</td><td>Fx</td><td>1111 xxxx</td><td>Halt (could use XXXX for other instructions, push, pop, chs, etc.)</td></tr>
 </table>
-</center>
 
--->
 </body>
 </html>
 
