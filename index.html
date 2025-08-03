@@ -8,6 +8,7 @@
 
 <script>
 debugging = false;
+show_labels = false;
 
 var memory = [ // Fibonacci Numbers up to 233
 /* 0 */ 0x51,  // ldi 1   ; 1
@@ -212,6 +213,17 @@ function change_example() {
       "F F ; by this\n"
   }
   display_status();
+  update_canvas();
+}
+
+function toggle_labels() {
+  show_labels = document.getElementById("ShowLabels").checked;
+  if (show_labels) {
+    image_file_name = "computer_background_640_labels.png";
+  } else {
+    image_file_name = "computer_background_640.png";
+  }
+  setup_canvas();
   update_canvas();
 }
 
@@ -1385,6 +1397,8 @@ function update_canvas() {
   }
 }
 
+image_file_name = 'computer_background_640.png';
+
 function setup_canvas() {
   var canvas = document.getElementById('drawing_area');
   if (canvas != null) {
@@ -1401,7 +1415,7 @@ function setup_canvas() {
       update_canvas();
     };
 
-    image.src = 'computer_background_640.png';
+    image.src = image_file_name;
   }
 }
 
@@ -2588,6 +2602,7 @@ F 0</textarea>
 
 <!-- <option value="Multiply">Multiply: E x F</option> May not work yet -->
 </select>
+<br/><input type="checkbox" id="ShowLabels" onclick="toggle_labels();">Labels
 <br/><input type="checkbox" id="Debugging" onclick="toggle_debugging();">Debug
 </center>
 </td>
@@ -2604,7 +2619,7 @@ F 0</textarea>
 <option value="introduction">Introduction</option>
 <option value="instruction_set">Instruction Set</option>
 </select>
-<button type="button" onclick="on_help_change();">Load</button><center>
+<button type="button" onclick="on_help_change();">Load</button></center>
 <hr/>
 
 
@@ -2614,8 +2629,101 @@ F 0</textarea>
 <center>
 <h3>Introduction</h3>
 </center>
-This simulation attempts to replicate the operation of <b><a href="https://eater.net/8bit">Ben Eater's 8-bit Computer</a></b>.
-This simulation contains buttons and dip switches similar to those on Ben's computer.
+<p>This simulation attempts to replicate the operation of <b><a href="https://eater.net/8bit">Ben Eater's 8-bit Computer</a></b>.</p>
+
+<p>The simulation contains buttons and dip switches on the virtual computer similar to those on Ben's physical computer. These can be used to load memory, start, stop, and step the clock, and reset the computer. In other words, they contain all of the functionality needed to run the computer.</p>
+
+<p>This simulation also contains additional capabilities to write programs as either source code or hex code and to load that code into memory for execution. It also contains convenient controls for loading pre-written programs, running, stopping, and resetting the computer.</p>
+
+<h4>Getting Started</h4>
+
+<p>The easiest way to get started is to simply click the Green "Run/Stop" button. The simulation is initially pre-loaded with Ben's Fibonacci program which will start running and repeatedly display the numbers 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233. The simulation can be stopped and continued with the "Run/Stop" button. It can also be reset with the "Reset" button.</p>
+
+<p>Beyond the default Fibonacci program, the simulation contains an "Examples" selector that allows loading of other demonstration programs for counting, adding, and multiplying. Selecting any of those programs will load the source code into the "Source Code" text box. They will still need to be assembled and loaded before being run. Simply click the "Assemble" button to assemble the code in the "Source Code" box placing the result in the "Hex Code" box. The hex code can then be loaded into the computer's memory with the "Load" button at the top of the "Hex Code" box (note that it's best to stop any simulation before loading new hex code into memory). Once the code has been assembled and loaded, the computer can optionally be reset again with the "Reset" button. This process is as follows:</p>
+<ol><li>Click "Reset" to reset the computer</li>
+<li>Select an Example to run</li>
+<li>Click "Assemble" to assemble to hex</li>
+<li>Click "Load" to load into memory</li>
+<li>Click "Run/Stop" to run and stop the computer</li>
+</ol>
+<p>This process can be followed for each example program.</p>
+
+<p>Of course, you can also write your own programs in either assembly language (in the "Source Code" box) or in plain hex (in the "Hex Code" box). The full instruction set is available through the "Additional Information" drop down box above. Note that programs are not saved, so they should be copied and saved in an external file to preserve anything you write.</p>
+
+<h4>Direct Programming</h4>
+
+<p>You can also interact with the controls on the computer itself. This is most easily done by checking the "Labels" check box below the "Source Code" box. The "Labels" check box controls the showing or hiding of the yellow labels that reference the various controls on the computer. Showing the labels makes it much easier to directly program the computer. The labels should show:</p>
+
+<ul><li>CLOCK SPEED</li>
+<li>STEP</li>
+<li>RUN/STOP</li>
+<li>RUN/LOAD</li>
+<li>MEMORY ADDRESS</li>
+<li>LOAD</li>
+<li>DATA</li>
+<li>RESET</li>
+</ul>
+
+<p>The programming steps below will use the labels to guide you through programming a simple counting program. The counting program is shown in the form of a listing here (address, op code, assembly code):</p>
+
+<pre>
+    0  51   LDI 1
+    1  4F   STA F
+    2  50   LDI 0
+    3  2F   ADD F
+    4  E0   OUT
+    5  63   JMP 3
+</pre>
+<p>In other words, you will want to program the hex value of "51" at address "0", the value of "4F" at address "1", the value of "50" at address "2", and so on. The steps below will walk you through the process. Note that it the DIP switches will show black for a 0, and white for a 1. Also note that these switches are very small, and it helps to zoom in your web browser window to make it easier to click on them. It might also help to open a second browser window so that you can view these steps in one window while working with the computer in another window (without scrolling up and down). Follow these steps to program the counting program listed above (remember all controls refer those INSIDE the computer image itself):</p>
+
+<ol><li>Click the RESET button (most LEDs should turn off)</li>
+<li>Click the RUN/LOAD button (red LED should be on indicating load mode)</li>
+<li>Set the first address (0000 - all black) in the MEMORY ADDRESS switches</li>
+<li>Set the first instruction (51 or 01010001) in the DATA switches</li>
+<li>Click the LOAD button to load the instruction from the switches into memory</li>
+<li>Note that the "Memory Contents" LEDs should match the DATA switches</li>
+<li>Set the second address (0001) by clicking rightmost switch (it will turn white)</li>
+<li>Set the second instruction (4F or 01001111) in the DATA switches</li>
+<li>Click the LOAD button to load the instruction from the switches into memory</li>
+<li>Again, the "Memory Contents" LEDs should match the DATA switches</li>
+<li>Set the next Memory Address (0010) by toggling two rightmost switches</li>
+<li>Set the third instruction (50 or 01010000) in the DATA switches</li>
+<li>Click the LOAD button to load the instruction from the switches into memory</li>
+<li>Again, the "Memory Contents" LEDs should match the DATA switches</li>
+<li>Set the next Memory Address (0011) by toggling the rightmost switch</li>
+<li>Set the fourth instruction (2F or 00101111) in the DATA switches</li>
+<li>Click the LOAD button to load the instruction from the switches into memory</li>
+<li>Again, the "Memory Contents" LEDs should match the DATA switches</li>
+<li>Set the next Memory Address (0100) by toggling the three rightmost switches</li>
+<li>Set the fifth instruction (E0 or 11100000) in the DATA switches</li>
+<li>Click the LOAD button to load the instruction from the switches into memory</li>
+<li>Again, the "Memory Contents" LEDs should match the DATA switches</li>
+<li>Set the next Memory Address (0101) by toggling the rightmost switch</li>
+<li>Set the sixth instruction (63 or 01100011) in the DATA switches</li>
+<li>Click the LOAD button to load the instruction from the switches into memory</li>
+<li>Again, the "Memory Contents" LEDs should match the DATA switches</li>
+<li>At this point, you can look at the "Memory" listing to the right of the computer. It should show all six of the instructions (51, 4F, 50, 2F, E0, 63)
+<li>Click the RUN/LOAD button (green LED should be on indicating run mode)</li>
+<li>Click the RESET button to be sure the computer is starting at 0</li>
+<li>Click the RUN/STOP button (it will turn pale pink) to start counting</li>
+</ol>
+
+<p>At this point, the computer should be counting along at a reasonable pace. You can change the clock speed by clicking on the "CLOCK SPEED" control in the upper left. That button will cycle through 4 different speeds:</p>
+
+<ul><li>Very Slow (about 1 clock cycle for every 2 seconds)</li>
+<li>Slow (a few clocks per second)</li>
+<li>Fast (many clocks per second)</li>
+<li>Fastest (as fast as the simulator can run)</li>
+</ul>
+
+<p>You can also single step the clock by toggling off the "RUN/STOP" button (if already running), and then clicking the "STEP" button for each clock pulse.</p>
+
+<h4>Debug Switch</h4>
+
+<p>Ideally, this computer should be bit-for-bit identical to Ben's computer. However, this has not been confirmed, and the simulation code does not (yet) operate at the gate level. So there are likely to be some differences. In fact, there are actually three levels of simulation code in this program. There's a "Macro" level (which doesn't use microcode at all), a "Micro1" level, and a "Micro2" level. The default is currenly set to "Micro1" which is not yet as close to the hardware as desired. These different simulation levels can be explored by checking the "Debug" checkbox below the "Source Code" box. Checking "Debug" does two things. First, it enables various "console.log" print statments which may be visible in your browser's Development Tools window. Second, it will show a level selection box in the upper right corner of the Computer window. This box can be clicked to cycle through the three simulation levels ("Macro" is blue, "Micro1" is green, and "Micro2" is red). Note that this is a temporary feature until the simulation can be completed and verified.</p>
+
+
+
 </div>
 
 <div id="instruction_set" hidden>
